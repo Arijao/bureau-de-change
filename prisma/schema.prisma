@@ -1,0 +1,548 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ── AUTH ────────────────────────────────────────────────────
+// role: "ADMIN" | "CAISSIER"
+model User {
+  id           String        @id @default(cuid())
+  username     String        @unique
+  passwordHash String
+  name         String
+  role         String        @default("CAISSIER")
+  active       Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  sessions     Session[]
+  transactions Transaction[]
+  rateChanges  ExchangeRate[]
+  stockChanges StockLog[]
+  operationLogs    OperationLog[]
+  deletedTransactions Transaction[] @relation("DeletedTransactions")
+  transactionEdits    TransactionEdit[] @relation("TransactionEdits")
+  journalEntries   JournalEntry[]
+  auditLogs        AuditLog[]
+  employee         Employee?
+  attestations     Attestation[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ── CURRENCY ────────────────────────────────────────────────
+model Currency {
+  id           Int           @id @default(autoincrement())
+  code         String        @unique  // EUR, USD, CHF, CAD…
+  name         String
+  symbol       String?
+  flag         String        @default("🏳️")
+  isActive     Boolean       @default(true)
+  isBase       Boolean       @default(false) 
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  rates        ExchangeRate[]
+  stocks       CashStock[]
+  transactions Transaction[]
+  denominationCategories DenominationCategory[]
+}
+
+// ── EXCHANGE RATE (historique complet) ─────────────────────
+// Le DERNIER enregistrement par devise = taux actif
+model ExchangeRate {
+  id         Int      @id @default(autoincrement())
+  buyRate    Float
+  sellRate   Float
+  note       String?
+  createdAt  DateTime @default(now())
+
+  currency   Currency      @relation(fields: [currencyId], references: [id], onDelete: Cascade)
+  currencyId Int
+
+  createdBy  String?
+  user       User?         @relation(fields: [createdBy], references: [id])
+
+  transactions Transaction[]
+  categoryRates ExchangeCategoryRate[]
+}
+
+// ── CASH STOCK (liquidité par devise) ──────────────────────
+// Une seule ligne par devise — mis à jour à chaque transaction
+model CashStock {
+  id         Int      @id @default(autoincrement())
+  amount     Float    @default(0)
+  alertLevel Float    @default(100)  // seuil alerte stock faible
+  updatedAt  DateTime @updatedAt
+
+  currency   Currency @relation(fields: [currencyId], references: [id], onDelete: Cascade)
+  currencyId Int      @unique
+
+  logs       StockLog[]
+}
+
+// ── STOCK LOG (traçabilité des mouvements de caisse) ───────
+model StockLog {
+  id          Int      @id @default(autoincrement())
+  operation   String   // "ACHAT" | "VENTE" | "DEPOT" | "RETRAIT" | "AJUSTEMENT"
+  delta       Float    // positif = entrée, négatif = sortie
+  balanceBefore Float
+  balanceAfter  Float
+  note        String?
+  createdAt   DateTime @default(now())
+
+  stock       CashStock @relation(fields: [stockId], references: [id])
+  stockId     Int
+
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+
+  transactionId String? 
+  transaction Transaction? @relation(fields: [transactionId], references: [id])
+  
+  details     StockLogDetail[]
+}
+
+// ── TRANSACTION ─────────────────────────────────────────────
+// type: "ACHAT" | "VENTE"
+model Transaction {
+  id           String   @id @default(cuid())
+  receiptNo    String   @unique
+  type         String
+  amount       Float
+  rate         Float
+  commission   Float    @default(0)
+  totalMGA     Float
+  note         String?
+  createdAt    DateTime @default(now())
+
+  currency     Currency @relation(fields: [currencyId], references: [id])
+  currencyId   Int
+
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id])
+
+  exchangeRateId Int?
+  exchangeRate   ExchangeRate? @relation(fields: [exchangeRateId], references: [id])
+
+  // Soft delete — null = active, non-null = supprimée logiquement
+  deletedAt      DateTime?
+  deletedBy      String?
+  deletedByUser  User?    @relation("DeletedTransactions", fields: [deletedBy], references: [id])
+
+  receipt      Receipt?
+  stockLogs    StockLog[]
+  edits        TransactionEdit[]
+
+  // Lien 1-1 vers l'écriture comptable générée automatiquement
+  journalEntry JournalEntry?
+    // Lien 1-1 vers l'attestation de change (si générée)
+  attestation    Attestation?
+
+  details      TransactionDetail[]
+}
+
+// ── TRANSACTION EDIT (audit trail des modifications) ─────────
+model TransactionEdit {
+  id            Int      @id @default(autoincrement())
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+
+  editedBy      String?
+  user          User?    @relation("TransactionEdits", fields: [editedBy], references: [id])
+  editedAt      DateTime @default(now())
+
+  // Snapshot avant modification
+  beforeAmount  Float
+  beforeRate    Float
+  beforeCommission Float
+  beforeTotalMGA   Float
+  beforeNote    String?
+
+  // Snapshot après modification
+  afterAmount   Float
+  afterRate     Float
+  afterCommission Float
+  afterTotalMGA   Float
+  afterNote     String?
+}
+
+// ── RECEIPT ─────────────────────────────────────────────────
+// size: "MM58" | "MM80"
+model Receipt {
+  id            String    @id @default(cuid())
+  transactionId String    @unique
+  receiptNo     String
+  size          String    @default("MM80")
+  printedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+}
+
+// ── OPERATION LOG (audit trail) ─────────────────────────────
+// action: "LOGIN" | "RATE_UPDATE" | "STOCK_ADJUST" | "TX_CREATE" | "CURRENCY_CREATE" etc.
+model OperationLog {
+  id        Int      @id @default(autoincrement())
+  action    String
+  entity    String?  // "Currency", "Transaction", etc.
+  entityId  String?
+  detail    String?  // JSON stringifié
+  createdAt DateTime @default(now())
+
+  userId    String?
+  user      User?   @relation(fields: [userId], references: [id])
+}
+
+// ── SETTINGS ─────────────────────────────────────────────────
+model Settings {
+  id         String   @id @default("singleton")
+  bureauName String   @default("Bureau de Change FX Mada")
+  address    String   @default("Antananarivo, Madagascar")
+  phone      String   @default("+261 20 22 XXX XX")
+  footer     String   @default("Merci pour votre confiance")
+  bureauPrefix String?  // Préfixe court pour les références d'attestation (ex: TREX)
+  logoBase64 String?  // Logo du bureau encodé en base64 (data:image/...;base64,...)
+  logoName   String?   // Nom du fichier d'origine (ex: logo.png)
+  // Informations officielles pour les attestations
+  nif        String?  // Numéro d'Identification Fiscale
+  stat       String?  // Numéro STAT
+  rcs        String?  // Numéro Registre de commerce
+  email      String?
+  rib        String?  // Relevé d'Identité Bancaire
+  attestationRate Float @default(100) // Tarif attestation en Ar par unité de devise (ex: 100 Ar pour 1 EUR)
+  updatedAt  DateTime @updatedAt
+}
+
+// ═══════════════════════════════════════════════════════════
+// ── COMPTABILITÉ (Double entrée) ──────────────────────────
+// ═══════════════════════════════════════════════════════════
+
+// ── LEDGER ACCOUNT (plan comptable) ──────────────────────────────────────────
+model LedgerAccount {
+  id          Int      @id @default(autoincrement())
+  code        String   @unique // ex: "53000", "41100", "70600"
+  name        String   // ex: "Caisse EUR", "Caisse MGA", "Revenus FX"
+  type        String   // "ASSET" | "LIABILITY" | "EQUITY" | "REVENUE" | "EXPENSE"
+  description String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  
+  // Relations
+  journalLines JournalEntryLine[]
+  expenses    Expense[]
+}
+
+// ── JOURNAL ENTRY (écriture comptable) ───────────────────────────────────────
+model JournalEntry {
+  id            Int      @id @default(autoincrement())
+  date          DateTime @default(now())
+  description   String
+  reference     String?  // ex: receiptNo de la Transaction
+  
+  createdAt     DateTime @default(now())
+  
+  // Relations
+  lines         JournalEntryLine[]
+  
+  // Lien 1-1 avec la Transaction (pour génération automatique)
+  transactionId String?  @unique
+  transaction   Transaction? @relation(fields: [transactionId], references: [id])
+  
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id])
+}
+
+// ── JOURNAL ENTRY LINE (ligne d'écriture débit/crédit) ───────────────────────
+model JournalEntryLine {
+  id             Int      @id @default(autoincrement())
+  journalEntryId Int
+  accountId      Int
+  debit          Float    @default(0)
+  credit         Float    @default(0)
+  description    String?
+  
+  // Relations
+  journalEntry   JournalEntry  @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  account        LedgerAccount @relation(fields: [accountId], references: [id])
+}
+
+// ═══════════════════════════════════════════════════════════
+// ── RESSOURCES HUMAINES (RH) ──────────────────────────────
+// ═══════════════════════════════════════════════════════════
+
+// ── EMPLOYEE (employé) ───────────────────────────────────────────────────────
+model Employee {
+  id               Int       @id @default(autoincrement())
+  firstName        String
+  lastName         String
+  cin              String?   @unique
+  phone            String?
+  email            String?
+  address          String?   // ← Vérifiez ces 4 lignes
+  sex              String?   // ←
+  maritalStatus    String?   // ←
+  numberOfChildren Int?      @default(0) // ←
+  department       String?
+  position         String?
+  bankAccount      String?
+  baseSalary       Float     @default(0)
+  active           Boolean   @default(true)
+  hiredAt          DateTime  @default(now())
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  
+  // Relations
+  attendances Attendance[]
+  salaries    Salary[]
+  advances    Advance[]
+  sanctions   Sanction[]
+  leaves      Leave[]
+  
+  userId      String?  @unique
+  user        User?    @relation(fields: [userId], references: [id])
+}
+
+// ── ATTENDANCE (présence/pointage) ───────────────────────────────────────────
+model Attendance {
+  id          Int      @id @default(autoincrement())
+  employeeId  Int
+  date        DateTime
+  checkIn     DateTime?
+  checkOut    DateTime?
+  hours       Float?   // heures travaillées
+  status      String   @default("PRESENT") // "PRESENT", "ABSENT", "LATE", "LEAVE"
+  note        String?
+  createdAt   DateTime @default(now())
+  
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+// ── SALARY (paie/salaire) ────────────────────────────────────────────────────
+model Salary {
+  id          Int      @id @default(autoincrement())
+  employeeId  Int
+  month       Int      // 1-12
+  year        Int      // ex: 2026
+  baseSalary  Float
+  bonuses     Float    @default(0) // primes
+  deductions  Float    @default(0) // retenues diverses
+  netSalary   Float
+  paidAt      DateTime?
+  note        String?
+  createdAt   DateTime @default(now())
+  
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+// Champs CNaPS (AJOUTER ICI)
+  cnapsEmployee Float @default(0)  // Part salariale CNaPS
+  cnapsEmployer Float @default(0)  // Part patronale CNaPS
+  ostieEmployee Float @default(0)  // Part salariale OSTIE (si applicable)
+}
+
+// ── ADVANCE (avance sur salaire) ─────────────────────────────────────────────
+model Advance {
+  id          Int      @id @default(autoincrement())
+  employeeId  Int
+  amount      Float
+  date        DateTime @default(now())
+  status      String   @default("APPROVED") // "PENDING", "APPROVED", "DEDUCTED", "CANCELLED"
+  note        String?
+  createdAt   DateTime @default(now())
+  
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+// ── SANCTION (sanction disciplinaire) ────────────────────────────────────────
+model Sanction {
+  id          Int      @id @default(autoincrement())
+  employeeId  Int
+  type        String   // "WARNING", "SUSPENSION", "FINANCIAL"
+  amount      Float    @default(0) // montant si sanction financière
+  date        DateTime @default(now())
+  reason      String
+  note        String?
+  createdAt   DateTime @default(now())
+  
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+// ── LEAVE (congés) ───────────────────────────────────────────────────────────
+model Leave {
+  id          Int      @id @default(autoincrement())
+  employeeId  Int
+  type        String   // "PAID", "UNPAID", "SICK"
+  startDate   DateTime
+  endDate     DateTime
+  days        Float
+  status      String   @default("PENDING") // "PENDING", "APPROVED", "REJECTED"
+  note        String?
+  createdAt   DateTime @default(now())
+  
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+// ═══════════════════════════════════════════════════════════
+// ── AUDIT ÉTENDU ──────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+
+// ── AUDIT LOG (audit générique étendu) ───────────────────────────────────────
+model AuditLog {
+  id          Int      @id @default(autoincrement())
+  action      String   // "CREATE", "UPDATE", "DELETE", "LOGIN", "APPROVE", etc.
+  entity      String   // "Transaction", "Employee", "Salary", etc.
+  entityId    String?
+  beforeData  String?  // JSON stringifié
+  afterData   String?  // JSON stringifié
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+  
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+}
+
+// ══════════════════════════════════════════════════════════
+// MODULE CHARGES - Dépenses et cotisations sociales
+// ══════════════════════════════════════════════════════════
+
+model Expense {
+  id          Int      @id @default(autoincrement())
+  date        DateTime @default(now())
+  amount      Float
+  accountId   Int
+  category    String   // LOYER, ELECTRICITE, EAU, INTERNET, CARBURANT, FOURNITURES, CNAPS, AUTRES
+  supplier    String?
+  description String
+  reference   String?  // Numéro de facture
+  period      String?  // Période concernée (ex: "Juin 2026")
+  note        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  account     LedgerAccount @relation(fields: [accountId], references: [id])
+  
+  @@index([date])
+  @@index([category])
+}
+
+model HrSettings {
+  id                Int      @id @default(autoincrement())
+  cnapsEnabled      Boolean  @default(true)
+  cnapsEmployeeRate Float    @default(0.01)   // 1%
+  cnapsEmployerRate Float    @default(0.13)   // 13%
+  cnapsCeiling      Float    @default(6000000) // 6 000 000 Ar
+  ostieEnabled      Boolean  @default(false)
+  ostieRate         Float    @default(0.01)   // 1% (si applicable)
+  updatedAt         DateTime @updatedAt
+  
+  @@map("hr_settings")
+}
+
+// ── ATTESTATION (archivage des attestations de change) ───────────────────────
+model Attestation {
+  id               String   @id @default(cuid())
+  attestationNo    String   @unique               // ex: ATT-2606-REC-1001
+  transactionId    String?  @unique               // lien 1-1 unique vers Transaction
+  transaction      Transaction? @relation(fields: [transactionId], references: [id])
+  receiptNo        String                         // copie dénormalisée pour affichage rapide
+
+  // Identité du client
+  clientName       String
+  passportNo       String
+  passportIssuedAt String                         // format YYYY-MM-DD (input date)
+  passportExpiresAt String                        // format YYYY-MM-DD
+  nationality      String
+  clientAddress    String?
+
+  // Informations du voyage (optionnelles)
+  destination      String?
+  travelNature     String?
+  transportTitle   String?
+  ticketNo         String?
+  departureDate    String?                        // format YYYY-MM-DD
+  returnDate       String?                        // format YYYY-MM-DD
+
+  // Données financières (snapshot au moment de l'émission)
+  currencyCode     String
+  currencyFlag     String
+  amount           Float
+  rate             Float
+  commission       Float    @default(0)
+  totalMGA         Float
+
+  // Métadonnées
+  createdAt        DateTime @default(now())
+  createdBy        String?                        // userId du caissier
+  user             User?    @relation(fields: [createdBy], references: [id])
+
+  @@index([attestationNo])
+  @@index([createdAt])
+  @@index([receiptNo])
+}
+
+model AttestationCounter {
+  id           Int    @id @default(autoincrement())
+  bureauPrefix String            // ex: "TREX" — extrait de bureauName
+  month        Int               // 1-12
+  year         Int               // ex: 26 (format AA)
+  lastSeq      Int    @default(0)
+
+  @@unique([bureauPrefix, month, year])
+  @@index([bureauPrefix, month, year])
+  @@map("AttestationCounter")
+}
+
+// ═══════════════════════════════════════════════════════════
+// ── GESTION DES COUPURES ET SOUS-TAUX ────────────────────
+// ═══════════════════════════════════════════════════════════
+
+model DenominationCategory {
+  id            Int      @id @default(autoincrement())
+  currencyId    Int
+  currency      Currency @relation(fields: [currencyId], references: [id], onDelete: Cascade)
+  name          String
+  denominations String   // format JSON e.g. "[500,200,100,50]"
+  active        Boolean  @default(true)
+
+  rates         ExchangeCategoryRate[]
+}
+
+model ExchangeCategoryRate {
+  id             Int      @id @default(autoincrement())
+  exchangeRateId Int
+  exchangeRate   ExchangeRate @relation(fields: [exchangeRateId], references: [id], onDelete: Cascade)
+  categoryId     Int
+  category       DenominationCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  buyRate        Float
+}
+
+model TransactionDetail {
+  id             Int      @id @default(autoincrement())
+  transactionId  String
+  transaction    Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  
+  categoryName   String
+  denomination   Float
+  quantity       Int
+  rateApplied    Float
+  subtotalAmount Float
+  subtotalMGA    Float
+}
+
+model StockLogDetail {
+  id             Int      @id @default(autoincrement())
+  stockLogId     Int
+  stockLog       StockLog @relation(fields: [stockLogId], references: [id], onDelete: Cascade)
+  denomination   Float
+  quantity       Int
+}
