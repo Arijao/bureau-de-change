@@ -1,12 +1,21 @@
 'use client'
-
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { getLoginSettings } from './actions'
 
 export default function LoginPage() {
   const router = useRouter()
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [settings, setSettings] = useState({
+    bureauName: 'Bureau de Change',
+    logoBase64: null as string | null,
+  })
+
+  // Charger les paramètres du bureau
+  useEffect(() => {
+    getLoginSettings().then(setSettings)
+  }, [])
 
   // Nettoie silencieusement un éventuel cookie de session périmé.
   // Évite la boucle de redirect si un token invalide traîne dans le navigateur.
@@ -34,11 +43,33 @@ export default function LoginPage() {
     <div className="login-page">
       <div className="login-card">
         <div className="login-header">
-          <div className="login-logo">₵</div>
-          <h1 className="login-title">Bureau de Change</h1>
-          <p className="login-subtitle">FX Mada · Système de gestion des opérations</p>
+          {/* Logo dynamique */}
+          {settings.logoBase64 ? (
+            <img 
+              src={settings.logoBase64} 
+              alt="Logo" 
+              className="login-logo"
+              style={{
+                width: '80px',
+                height: '80px',
+                objectFit: 'contain',
+                borderRadius: '12px',
+                backgroundColor: 'white',
+                padding: '8px',
+                marginBottom: '16px',
+              }}
+            />
+          ) : (
+            <div className="login-logo">₵</div>
+          )}
+          
+          {/* Nom dynamique du bureau */}
+          <h1 className="login-title">{settings.bureauName}</h1>
+          <p className="login-subtitle">Système de gestion des opérations</p>
         </div>
+
         {error && <div className="alert alert-error">{error}</div>}
+
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
             <label className="form-label">Identifiant</label>
@@ -52,13 +83,12 @@ export default function LoginPage() {
             {loading ? 'Connexion...' : 'Se connecter'}
           </button>
         </form>
-        <div className="login-demo">
-          <div className="demo-label">Comptes de démonstration</div>
-          <div className="demo-accounts">
-            <div className="demo-account"><div className="demo-role">Administrateur</div><div className="demo-creds">admin / admin123</div></div>
-            <div className="demo-account"><div className="demo-role">Caissier</div><div className="demo-creds">caissier / caissier123</div></div>
-          </div>
-        </div>
+
+        {/* Section démonstration SUPPRIMÉE */}
+      </div>
+      <div className="dev-signature">
+        <span className="at-symbol">@</span>
+        <span className="dev-name">Arijao Rado</span>
       </div>
     </div>
   )

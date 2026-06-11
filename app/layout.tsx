@@ -42,6 +42,13 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr">
+      <head>
+        {/* Import de la police Dancing Script pour la signature */}
+        <link 
+          href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&display=swap" 
+          rel="stylesheet" 
+        />
+      </head>
       <body>{children}</body>
     </html>
   )

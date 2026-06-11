@@ -1,6 +1,7 @@
 import { getSessionUser } from '@/lib/auth'
 import { getSettings } from '@/services/settings.service'
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 import Navbar from '@/components/layout/Navbar'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -15,6 +16,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <div className="app-container">
       <Navbar user={{ name: user.name, role: user.role }} bureauName={settings.bureauName} />
       <main className="main-content">{children}</main>
+      
+      {/* ← AJOUTER ICI : Signature développeur (même style que login) */}
+      <div className="dev-signature">
+        <span className="at-symbol">@</span>
+        <span className="dev-name">Arijao Rado</span>
+      </div>
     </div>
   )
 }
