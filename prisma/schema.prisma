@@ -347,6 +347,7 @@ model Salary {
   cnapsEmployee Float @default(0)  // Part salariale CNaPS
   cnapsEmployer Float @default(0)  // Part patronale CNaPS
   ostieEmployee Float @default(0)  // Part salariale OSTIE (si applicable)
+  leaveDeduction Float @default(0) // Retenue pour congés sans solde/maladie
 }
 
 // ── ADVANCE (avance sur salaire) ─────────────────────────────────────────────

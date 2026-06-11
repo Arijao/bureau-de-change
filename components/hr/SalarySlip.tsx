@@ -21,20 +21,33 @@ interface Salary {
   bonuses: number
   deductions: number
   netSalary: number
-  cnapsEmployee: number  // NOUVEAU
-  cnapsEmployer: number  // NOUVEAU
+  cnapsEmployee: number
+  cnapsEmployer: number
+  leaveDeduction: number  // ⬅️ AJOUTÉ
   note: string | null
   paidAt: Date | null
   createdAt: Date
 }
 
+// ⬇️ INTERFACE SETTINGS AJOUTÉE ⬇️
+interface Settings {
+  bureauName: string
+  address: string
+  phone: string
+  logoBase64: string | null
+  nif?: string | null
+  stat?: string | null
+  rcs?: string | null
+}
+
 interface Props {
   employee: Employee
   salary: Salary
+  settings: Settings  // ⬅️ AJOUTÉ
   onClose: () => void
 }
 
-export default function SalarySlip({ employee, salary, onClose }: Props) {
+export default function SalarySlip({ employee, salary, settings, onClose }: Props) {
   const slipRef = useRef<HTMLDivElement>(null)
 
   const handlePrint = () => {
@@ -66,13 +79,30 @@ export default function SalarySlip({ employee, salary, onClose }: Props) {
 
         {/* Contenu du bulletin */}
         <div ref={slipRef} className="salary-slip-content">
-          {/* En-tête entreprise */}
+          {/* En-tête entreprise - DYNAMIQUE */}
           <div className="slip-header">
-            <div className="slip-logo">₵</div>
+            {settings.logoBase64 ? (
+              <div className="slip-logo">
+                <img 
+                  src={settings.logoBase64} 
+                  alt="Logo" 
+                  style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '8px' }}
+                />
+              </div>
+            ) : (
+              <div className="slip-logo">₵</div>
+            )}
             <div className="slip-company-info">
-              <h1>BUREAU DE CHANGE XCHANGE</h1>
-              <p>Antananarivo, Madagascar</p>
-              <p>Tél : +261 20 22 XXX XX</p>
+              <h1>{settings.bureauName}</h1>
+              <p>{settings.address}</p>
+              <p>Tél : {settings.phone}</p>
+              {(settings.nif || settings.stat || settings.rcs) && (
+                <p style={{ fontSize: '11px', marginTop: '4px' }}>
+                  {settings.nif && `NIF: ${settings.nif} `}
+                  {settings.stat && `STAT: ${settings.stat} `}
+                  {settings.rcs && `RCS: ${settings.rcs}`}
+                </p>
+              )}
             </div>
           </div>
 
@@ -137,19 +167,28 @@ export default function SalarySlip({ employee, salary, onClose }: Props) {
                     <td className="slip-amount slip-amount-positive">+ {formatMGA(salary.bonuses)}</td>
                   </tr>
                 )}
-                {/* CNaPS salariale - NOUVEAU */}
+                {/* CNaPS salariale */}
                 {(salary.cnapsEmployee || 0) > 0 && (
                   <tr className="slip-row-deduction">
                     <td>CNaPS salariale (1%)</td>
                     <td className="slip-amount slip-amount-negative">- {formatMGA(salary.cnapsEmployee)}</td>
                   </tr>
                 )}
-                {/* Autres déductions (avances, sanctions, etc.) */}
-                {(salary.deductions - (salary.cnapsEmployee || 0)) > 0 && (
+                {/* Retenue pour congé sans solde */}
+                {(salary.leaveDeduction || 0) > 0 && (
+                  <tr className="slip-row-deduction">
+                    <td>Retenue pour absence (Congé sans solde)</td>
+                    <td className="slip-amount slip-amount-negative">
+                      - {formatMGA(salary.leaveDeduction)}
+                    </td>
+                  </tr>
+                )}
+                {/* Autres déductions (avances, sanctions) - CORRIGÉ */}
+                {(salary.deductions - (salary.cnapsEmployee || 0) - (salary.leaveDeduction || 0)) > 0 && (
                   <tr className="slip-row-deduction">
                     <td>Autres déductions (avances, sanctions)</td>
                     <td className="slip-amount slip-amount-negative">
-                      - {formatMGA(salary.deductions - (salary.cnapsEmployee || 0))}
+                      - {formatMGA(salary.deductions - (salary.cnapsEmployee || 0) - (salary.leaveDeduction || 0))}
                     </td>
                   </tr>
                 )}
@@ -163,7 +202,7 @@ export default function SalarySlip({ employee, salary, onClose }: Props) {
             </table>
           </div>
 
-          {/* Cotisations patronales - Section informative - NOUVEAU */}
+          {/* Cotisations patronales - Section informative */}
           {(salary.cnapsEmployer || 0) > 0 && (
             <div className="slip-cnaps-section">
               <h3>Cotisations patronales</h3>
@@ -226,9 +265,9 @@ export default function SalarySlip({ employee, salary, onClose }: Props) {
           border-radius: 12px;
           width: 100%;
           max-width: 700px;
-          max-height: 90vh; /* ← Hauteur maximale */
+          max-height: 90vh;
           display: flex;
-          flex-direction: column; /* ← Layout vertical */
+          flex-direction: column;
           box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
           overflow: hidden;
         }
@@ -241,7 +280,7 @@ export default function SalarySlip({ employee, salary, onClose }: Props) {
           padding: 16px 24px;
           background: #f8f9fa;
           border-bottom: 1px solid #e9ecef;
-          flex-shrink: 0; /* ← Ne rétrécit pas */
+          flex-shrink: 0;
         }
 
         .salary-slip-title {
@@ -255,8 +294,8 @@ export default function SalarySlip({ employee, salary, onClose }: Props) {
         .salary-slip-content {
           padding: 32px;
           background: #fff;
-          overflow-y: auto; /* ← Défilement vertical */
-          flex: 1; /* ← Prend l'espace restant */
+          overflow-y: auto;
+          flex: 1;
         }
 
         /* Personnalisation de la scrollbar */
@@ -299,6 +338,7 @@ export default function SalarySlip({ employee, salary, onClose }: Props) {
           font-size: 28px;
           font-weight: 700;
           flex-shrink: 0;
+          overflow: hidden;
         }
 
         .slip-company-info h1 {

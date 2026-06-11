@@ -397,10 +397,10 @@ export async function getEmployeeLeaves(employeeId: number) {
 // ═══════════════════════════════════════════════════════════
 // ── PAIE (SALARY) ───────────────────────────────────────
 // ══════════════════════════════════════════════════════════
-
 /**
  * Calcule et génère le bulletin de salaire pour un employé sur un mois donné.
- * Intègre automatiquement les avances à déduire et les sanctions financières.
+ * Intègre automatiquement les avances à déduire, les sanctions financières 
+ * et les retenues pour congés sans solde.
  */
 export async function generateSalary(data: {
   employeeId: number
@@ -423,12 +423,56 @@ export async function generateSalary(data: {
   const startOfMonth = new Date(data.year, data.month - 1, 1)
   const endOfMonth = new Date(data.year, data.month, 0, 23, 59, 59)
 
-  // Calcul du salaire brut
+  // ═══════════════════════════════════════════════════════════
+  // NOUVEAU : GESTION DES CONGÉS ET ABSENCES
+  // ═══════════════════════════════════════════════════════════
+  // 1. Récupérer les congés approuvés qui chevauchent le mois de paie
+  const approvedLeaves = await prisma.leave.findMany({
+    where: {
+      employeeId: data.employeeId,
+      status: 'APPROVED',
+      startDate: { lte: endOfMonth },
+      endDate: { gte: startOfMonth },
+    },
+  })
+
+  // 2. Calculer la retenue sur salaire
+  // Standard : 26 jours ouvrables par mois (adaptable si votre convention utilise 30 jours calendaires)
+  const WORKING_DAYS_PER_MONTH = 26 
+  const dailyRate = employee.baseSalary / WORKING_DAYS_PER_MONTH
+  let leaveDeduction = 0
+
+  for (const leave of approvedLeaves) {
+    // Calculer les jours effectifs du congé qui tombent dans CE mois précis
+    const effectiveStart = leave.startDate < startOfMonth ? startOfMonth : leave.startDate
+    const effectiveEnd = leave.endDate > endOfMonth ? endOfMonth : leave.endDate
+    
+    if (effectiveStart <= effectiveEnd) {
+      const daysInMonth = Math.ceil((effectiveEnd.getTime() - effectiveStart.getTime()) / (1000 * 60 * 60 * 24)) + 1
+      
+      if (leave.type === 'UNPAID') {
+        leaveDeduction += daysInMonth * dailyRate
+      } else if (leave.type === 'SICK') {
+        // RÈGLE CONFIGURABLE : Par défaut, le congé maladie est intégralement payé (0% de retenue).
+        // Si votre politique prévoit une retenue partielle (ex: 50%), adaptez ici :
+        // leaveDeduction += daysInMonth * dailyRate * 0.5;
+      }
+      // 'PAID' ne génère aucune déduction
+    }
+  }
+  // Arrondi à 2 décimales pour éviter les erreurs de flottants
+  leaveDeduction = Math.round(leaveDeduction * 100) / 100
+  // ═══════════════════════════════════════════════════════════
+  // FIN GESTION DES CONGÉS
+  // ═══════════════════════════════════════════════════════════
+
+  // Le brut comptable reste le salaire théorique (pour l'affichage et l'écriture comptable)
   const grossSalary = employee.baseSalary + (data.bonuses ?? 0)
 
-  // NOUVEAU : Calcul des cotisations CNaPS
+  // L'assiette de cotisation CNaPS est réduite des absences non rémunérées (logique légale)
+  const cnapsBase = grossSalary - leaveDeduction
   const { calculateCnaps } = await import('@/services/charges.service')
-  const cnaps = await calculateCnaps(grossSalary)
+  const cnaps = await calculateCnaps(cnapsBase)
 
   // 1. Calculer les déductions automatiques (avances approuvées non encore déduites)
   const advancesToDeduct = await prisma.advance.findMany({
@@ -450,8 +494,9 @@ export async function generateSalary(data: {
   })
   const totalSanctionsDeduction = financialSanctions.reduce((sum, s) => sum + s.amount, 0)
 
-  // Calcul des déductions totales (CNaPS salariale + avances + sanctions + déductions manuelles)
-  const totalDeductions = cnaps.employee + totalAdvancesDeduction + totalSanctionsDeduction + (data.manualDeductions ?? 0)
+  // Calcul des déductions totales (CNaPS salariale + avances + sanctions + Retenue congé + déductions manuelles)
+  const totalDeductions = cnaps.employee + totalAdvancesDeduction + totalSanctionsDeduction + leaveDeduction + (data.manualDeductions ?? 0)
+
   const netSalary = grossSalary - totalDeductions
 
   console.log(`[generateSalary] Brut: ${grossSalary}, CNaPS sal: ${cnaps.employee}, CNaPS patr: ${cnaps.employer}, Déductions: ${totalDeductions}, Net: ${netSalary}`)
@@ -467,8 +512,9 @@ export async function generateSalary(data: {
         bonuses: data.bonuses ?? 0,
         deductions: totalDeductions,
         netSalary,
-        cnapsEmployee: cnaps.employee,  // NOUVEAU
-        cnapsEmployer: cnaps.employer,  // NOUVEAU
+        cnapsEmployee: cnaps.employee,
+        cnapsEmployer: cnaps.employer,
+        leaveDeduction: leaveDeduction, // ⬅️ NOUVEAU : Sauvegarde de la retenue
         note: data.note,
       },
     })
@@ -503,6 +549,7 @@ export async function getSalaries(employeeId?: number, year?: number) {
       netSalary: true,
       cnapsEmployee: true,  // NOUVEAU
       cnapsEmployer: true,  // NOUVEAU
+      leaveDeduction: true,
       paidAt: true,
       note: true,
       createdAt: true,

@@ -2,10 +2,10 @@ import { Suspense } from 'react'
 import { getSessionUser } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { getEmployees, getSalaries } from '@/services/hr.service'
+import { getSettings } from '@/services/settings.service'  // ⬅️ AJOUT
 import { formatMGA } from '@/lib/utils'
 import SalaryForm from '@/components/hr/SalaryForm'
 import SalaryTable from '@/components/hr/SalaryTable'
-
 
 export const dynamic = 'force-dynamic'
 
@@ -24,12 +24,13 @@ export default async function SalaryPage({
   if (!user || user.role !== 'ADMIN') redirect('/dashboard')
 
   const params = await searchParams
-  const [employees, salaries] = await Promise.all([
+  const [employees, salaries, settings] = await Promise.all([  // ⬅️ AJOUT de settings
     getEmployees(false),
     getSalaries(
       params.employeeId ? parseInt(params.employeeId) : undefined,
       params.year ? parseInt(params.year) : undefined
     ),
+    getSettings(),  // ⬅️ AJOUT
   ])
 
   // Statistiques
@@ -72,9 +73,13 @@ export default async function SalaryPage({
       {/* Formulaire de génération de paie */}
       <SalaryForm employees={employees} />
 
-      {/* Tableau des salaires */}
+      {/* Tableau des salaires - MODIFIÉ pour passer settings */}
       <Suspense fallback={<div className="loading">Chargement...</div>}>
-        <SalaryTable salaries={salaries} employees={employees} />
+        <SalaryTable 
+          salaries={salaries} 
+          employees={employees}
+          settings={settings}  // ⬅️ AJOUT
+        />
       </Suspense>
     </div>
   )

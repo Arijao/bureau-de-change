@@ -27,17 +27,29 @@ interface Salary {
   netSalary: number
   cnapsEmployee: number  // NOUVEAU
   cnapsEmployer: number  // NOUVEAU
+  leaveDeduction: number  // NOUVEAU
   paidAt: Date | null
   note: string | null
   createdAt: Date
 }
 
+interface Settings {
+  bureauName: string
+  address: string
+  phone: string
+  logoBase64: string | null
+  nif?: string | null
+  stat?: string | null
+  rcs?: string | null
+}
+
 interface Props {
   salaries: Salary[]
   employees: Employee[]
+  settings: Settings  // ⬅️ NOUVEAU
 }
 
-export default function SalaryTable({ salaries, employees }: Props) {
+export default function SalaryTable({ salaries, employees, settings }: Props) {
   const router = useRouter()
   const [loadingId, setLoadingId] = useState<number | null>(null)
   const [viewingSalary, setViewingSalary] = useState<{ salary: Salary; employee: Employee } | null>(null)
@@ -226,6 +238,7 @@ export default function SalaryTable({ salaries, employees }: Props) {
         <SalarySlip
           employee={viewingSalary.employee}
           salary={viewingSalary.salary}
+          settings={settings}  // PASSAGE DE SETTINGS
           onClose={() => setViewingSalary(null)}
         />
       )}
