@@ -62,6 +62,8 @@ body {
   top: 0;
   z-index: 100;
   min-height: 52px;
+
+  overflow: visible;
 }
 
 .navbar-brand {
@@ -95,7 +97,16 @@ body {
 .navbar-links {
   display: flex;
   flex: 1;
-  overflow-x: auto;
+  align-items: center;
+
+  overflow-x: visible;
+  overflow-y: visible;
+}
+
+.navbar-links > div {
+  display: flex;
+  align-items: center;
+  height: 100%;
 }
 
 .navbar-link {
