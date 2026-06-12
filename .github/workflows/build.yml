@@ -25,7 +25,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --include=dev
 
       - name: Build Next.js (Standalone)
         run: npm run build
