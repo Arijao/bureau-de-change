@@ -295,3 +295,160 @@ export interface HrDashboardStats {
   pendingAdvances: number
   pendingLeaves: number
 }
+
+// ═══════════════════════════════════════════════════════════
+// ── SESSIONS DE CAISSE ────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+
+export type CashSessionStatus      = 'OPEN' | 'CLOSED'
+export type CashSessionBalanceType = 'OPENING' | 'CLOSING_THEORETICAL' | 'PHYSICAL_COUNT'
+
+// ── Détail par coupure (comptage physique) ────────────────
+export interface CashSessionCountDetail {
+  id:           number
+  balanceId:    number
+  denomination: number
+  quantity:     number
+}
+
+// ── Solde par devise et par type ─────────────────────────
+export interface CashSessionBalance {
+  id:          number
+  sessionId:   string
+  currencyId:  number
+  balanceType: CashSessionBalanceType
+  amount:      number
+  currency?:   Currency
+  countDetails?: CashSessionCountDetail[]
+}
+
+// ── Session brute (miroir du modèle Prisma) ──────────────
+export interface CashSession {
+  id:                string
+  sessionNo:         string
+  status:            CashSessionStatus
+  openedAt:          Date
+  closedAt:          Date | null
+  openingNote:       string | null
+  closingNote:       string | null
+  userId:            string
+  previousSessionId: string | null
+}
+
+// ── Bandeau Navbar (données minimales) ───────────────────
+export interface CashSessionBanner {
+  id:        string
+  sessionNo: string
+  status:    CashSessionStatus
+  openedAt:  Date
+  userName:  string
+}
+
+// ── Session enrichie avec ses relations ──────────────────
+export interface CashSessionWithRelations extends CashSession {
+  user: { name: string; role: string }
+  balances: (CashSessionBalance & {
+    currency: Currency
+    countDetails: CashSessionCountDetail[]
+  })[]
+  previousSession?: { sessionNo: string; closedAt: Date | null } | null
+  nextSession?:     { sessionNo: string } | null
+  _count?: {
+    transactions: number
+    expenses:     number
+  }
+}
+
+// ── Expense (type de base manquant dans types.ts) ────────
+// Miroir du modèle Prisma — inclut cashSessionId
+export interface Expense {
+  id:            number
+  date:          Date
+  amount:        number
+  accountId:     number
+  category:      string
+  supplier:      string | null
+  description:   string
+  reference:     string | null
+  period:        string | null
+  note:          string | null
+  cashSessionId: string | null
+  createdAt:     Date
+  updatedAt:     Date
+}
+
+// ── Mouvement par devise dans une session ────────────────
+export interface SessionMovementByCurrency {
+  currencyId:  number
+  currencyCode: string
+  currencyFlag: string
+  achatCount:  number
+  achatAmount: number  // montant en devise étrangère
+  achatMGA:    number  // contrepartie MGA
+  venteCount:  number
+  venteAmount: number
+  venteMGA:    number
+}
+
+// ── Écart à la clôture (physique vs théorique) ───────────
+export interface SessionDiscrepancy {
+  currency:    Currency
+  theoretical: number
+  physical:    number
+  diff:        number   // physical − theoretical (négatif = manque)
+}
+
+// ── Mouvement RH (hors transaction, par plage horaire) ───
+export interface SessionHrMovement {
+  id:            number
+  operation:     string
+  delta:         number
+  balanceBefore: number
+  balanceAfter:  number
+  note:          string | null
+  createdAt:     Date
+  user:          { name: string } | null
+}
+
+// ── Rapport complet de clôture ───────────────────────────
+export interface CashSessionReport {
+  session:             CashSessionWithRelations
+  movementsByCurrency: SessionMovementByCurrency[]
+  // Listes détaillées
+  achats:              TransactionWithRelations[]
+  ventes:              TransactionWithRelations[]
+  expenses:            Expense[]
+  hrMovements:         SessionHrMovement[]
+  // Soldes (depuis CashSessionBalance)
+  openingBalances:     (CashSessionBalance & { currency: Currency; countDetails: CashSessionCountDetail[] })[]
+  theoreticalBalances: (CashSessionBalance & { currency: Currency })[]
+  physicalBalances:    (CashSessionBalance & { currency: Currency; countDetails: CashSessionCountDetail[] })[]
+  discrepancies:       SessionDiscrepancy[]
+  // Totaux récapitulatifs
+  totalTransactions: number
+  totalExpensesMGA:  number
+  totalHrDelta:      number   // delta net MGA des mouvements RH
+  sessionDuration:   number   // durée en minutes
+}
+
+// ── Input pour ouverture de session ──────────────────────
+export interface OpenSessionInput {
+  userId:       string
+  openingNote?: string
+  previousSessionId?: string
+  openingBalances: Array<{
+    currencyId: number
+    amount:     number
+    denominations?: Array<{ denomination: number; quantity: number }>
+  }>
+}
+
+// ── Input pour clôture de session ────────────────────────
+export interface CloseSessionInput {
+  sessionId:    string
+  closingNote?: string
+  physicalCounts: Array<{
+    currencyId: number
+    denominations: Array<{ denomination: number; quantity: number }>
+  }>
+}

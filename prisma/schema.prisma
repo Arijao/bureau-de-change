@@ -29,6 +29,8 @@ model User {
   auditLogs        AuditLog[]
   employee         Employee?
   attestations     Attestation[]
+  cashSessions     CashSession[]  @relation("UserCashSessions")
+
 }
 
 model Session {
@@ -56,6 +58,7 @@ model Currency {
   stocks       CashStock[]
   transactions Transaction[]
   denominationCategories DenominationCategory[]
+  sessionBalances  CashSessionBalance[]
 }
 
 // ── EXCHANGE RATE (historique complet) ─────────────────────
@@ -150,6 +153,9 @@ model Transaction {
   attestation    Attestation?
 
   details      TransactionDetail[]
+  cashSessionId  String?
+  cashSession    CashSession?  @relation(fields: [cashSessionId], references: [id])
+
 }
 
 // ── TRANSACTION EDIT (audit trail des modifications) ─────────
@@ -427,6 +433,8 @@ model Expense {
   reference   String?  // Numéro de facture
   period      String?  // Période concernée (ex: "Juin 2026")
   note        String?
+  cashSessionId  String?
+  cashSession    CashSession?  @relation(fields: [cashSessionId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
@@ -546,4 +554,67 @@ model StockLogDetail {
   stockLog       StockLog @relation(fields: [stockLogId], references: [id], onDelete: Cascade)
   denomination   Float
   quantity       Int
+}
+
+// ── SESSION DE CAISSE ────────────────────────────────────────────────────────
+// Une session correspond à la période d'activité d'un caissier au guichet.
+// statut : "OPEN" (en cours) | "CLOSED" (clôturée)
+model CashSession {
+  id                String    @id @default(cuid())
+  sessionNo         String    @unique    // ex : CS-202606-001
+  status            String    @default("OPEN")   // OPEN | CLOSED
+  openedAt          DateTime  @default(now())
+  closedAt          DateTime?
+  openingNote       String?
+  closingNote       String?
+
+  // Caissier responsable de la session
+  userId            String
+  user              User      @relation("UserCashSessions", fields: [userId], references: [id])
+
+  // Chaîne de passation (optionnelle) — 1 session → 1 successeur
+  previousSessionId String?   @unique
+  previousSession   CashSession?  @relation("SessionChain", fields: [previousSessionId], references: [id])
+  nextSession       CashSession?  @relation("SessionChain")
+
+  // Éléments rattachés à cette session
+  balances     CashSessionBalance[]
+  transactions Transaction[]
+  expenses     Expense[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([openedAt])
+}
+
+// ── SOLDES DE SESSION (ouverture, clôture théorique, comptage physique) ──────
+// balanceType : "OPENING" | "CLOSING_THEORETICAL" | "PHYSICAL_COUNT"
+// Pour PHYSICAL_COUNT, le détail par coupure est dans CashSessionCountDetail.
+model CashSessionBalance {
+  id          Int    @id @default(autoincrement())
+  sessionId   String
+  currencyId  Int
+  balanceType String  // OPENING | CLOSING_THEORETICAL | PHYSICAL_COUNT
+  amount      Float   // Montant total pour ce type de solde
+
+  session      CashSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  currency     Currency     @relation(fields: [currencyId], references: [id])
+  countDetails CashSessionCountDetail[]
+
+  @@unique([sessionId, currencyId, balanceType])
+  @@index([sessionId])
+}
+
+// ── DÉTAIL PAR COUPURE (comptage physique à la clôture) ─────────────────────
+// Suit le même motif que StockLogDetail.
+// Uniquement pour les CashSessionBalance de type PHYSICAL_COUNT.
+model CashSessionCountDetail {
+  id           Int    @id @default(autoincrement())
+  balanceId    Int
+  denomination Float  // ex : 100, 50, 20, 10, 5 (en unité de la devise)
+  quantity     Int    // nombre de billets/pièces
+
+  balance      CashSessionBalance @relation(fields: [balanceId], references: [id], onDelete: Cascade)
+
+  @@index([balanceId])
 }

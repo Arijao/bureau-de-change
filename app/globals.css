@@ -181,6 +181,64 @@ body {
   border-color: var(--red);
 }
 
+.session-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: background 0.15s;
+  }
+
+  .session-banner--open {
+    background: color-mix(in srgb, var(--color-success, #16a34a) 12%, transparent);
+    color: var(--color-success, #16a34a);
+  }
+
+  .session-banner--closed {
+    background: color-mix(in srgb, var(--color-warning, #d97706) 12%, transparent);
+    color: var(--color-warning, #d97706);
+  }
+
+  .session-banner__dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: pulse-dot 2s infinite;
+  }
+
+  .session-banner__dot--off {
+    animation: none;
+    opacity: 0.6;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.35; }
+  }
+
+  .session-banner__duration {
+    opacity: 0.75;
+    font-size: 11px;
+  }
+
+  .session-banner__link {
+    font-weight: 600;
+    text-decoration: none;
+    color: inherit;
+    opacity: 0.9;
+  }
+
+  .session-banner__link:hover { opacity: 1; text-decoration: underline; }
+
+  .session-banner__link--alert {
+    color: var(--color-warning, #d97706);
+  }
+
 /* ── MAIN CONTENT ───────────────────────────────────────── */
 .main-content {
   flex: 1;

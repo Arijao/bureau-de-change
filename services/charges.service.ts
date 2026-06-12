@@ -26,9 +26,13 @@ export async function createExpense(data: {
   reference?: string
   period?: string
   note?: string
+  cashSessionId?: string   // ← AJOUT (nullable — pas de garde bloquante sur Expense)
 }): Promise<Expense> {
   return prisma.expense.create({
-    data,
+    data: {
+       ...data,
+       cashSessionId: data.cashSessionId ?? null,   // ← AJOUT
+     },
     include: { account: true },
   })
 }

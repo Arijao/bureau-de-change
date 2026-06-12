@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState, useRef, useEffect } from 'react'
+import type { CashSessionBanner } from '@/lib/types'  // ← AJOUT (côté serveur → prop)
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -61,6 +62,16 @@ const ADMIN_GROUPS: [NavGroup, NavGroup] = [
     ],
   },
 ]
+
+function formatSessionDuration(openedAt: Date): string {
+  const diffMs  = Date.now() - new Date(openedAt).getTime()
+  const minutes = Math.floor(diffMs / 60_000)
+  const hours   = Math.floor(minutes / 60)
+  const mins    = minutes % 60
+  if (hours > 0) return `${hours}h${String(mins).padStart(2, '0')}`
+  return `${mins}min`
+}
+
 
 // ─── Composant dropdown ───────────────────────────────────────────────────────
 
@@ -204,9 +215,10 @@ function NavDropdown({ group, isAdmin, pathname, openKey, setOpenKey }: Dropdown
 interface NavbarProps {
   user: { name: string; role: string }
   bureauName: string
+  sessionBanner?: CashSessionBanner | null
 }
 
-export default function Navbar({ user, bureauName }: NavbarProps) {
+export default function Navbar({ user, bureauName, sessionBanner  }: NavbarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const isAdmin = user.role === 'ADMIN'
@@ -232,16 +244,52 @@ export default function Navbar({ user, bureauName }: NavbarProps) {
         <span className="navbar-title">{bureauName}</span>
       </div>
 
+      
+        {/* ── Bandeau session ──────────────────────────────────── */}
+        {sessionBanner ? (
+          <div
+            className="session-banner session-banner--open"
+            title={`Session ${sessionBanner.sessionNo} ouverte par ${sessionBanner.userName}`}
+          >
+            <span className="session-banner__dot" />
+            <span className="session-banner__label">
+              {sessionBanner.sessionNo}
+            </span>
+            <span className="session-banner__duration">
+              {formatSessionDuration(sessionBanner.openedAt)}
+            </span>
+            <a href="/caisse" className="session-banner__link">
+              Gérer →
+            </a>
+          </div>
+        ) : (
+          <div className="session-banner session-banner--closed">
+            <span className="session-banner__dot session-banner__dot--off" />
+            <a href="/caisse" className="session-banner__link session-banner__link--alert">
+              ⚠ Ouvrir une session
+            </a>
+          </div>
+        )}
+      
+
       {/* ── Liens ───────────────────────────────────────────────── */}
       <div className="navbar-links">
 
         {/* Tableau de bord — lien direct (tous les rôles) */}
-        <Link
-          href="/dashboard"
-          className={`navbar-link ${pathname === '/dashboard' ? 'active' : ''}`}
-        >
-          📊 Tableau de bord
-        </Link>
+       <Link
+         href="/dashboard"
+         className={`navbar-link ${pathname === '/dashboard' ? 'active' : ''}`}
+       >
+         📊 Tableau de bord
+       </Link>
+    
+       {/* Session de caisse — visible par tous les rôles (Q4) */}
+       <Link
+         href="/caisse"
+         className={`navbar-link ${pathname.startsWith('/caisse') ? 'active' : ''}`}
+       >
+         ⊙ Caisse
+       </Link>
 
         {/* Opérations · Stock & Devises — communs à tous les rôles */}
         {COMMON_GROUPS.map(group => (

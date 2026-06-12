@@ -5,6 +5,7 @@ import { applyStockMovement, checkStock } from './stock.service'
 import { generateReceiptNo } from '@/lib/utils'
 import type { TxType } from '@/lib/types'
 export type { TxType as TransactionType }
+import { assertOpenSession } from '@/services/cash-session.service'
 
 export interface CreateTransactionInput {
   type: TxType
@@ -13,6 +14,7 @@ export interface CreateTransactionInput {
   commission?: number
   note?: string
   userId?: string
+  cashSessionId?: string
   overrideRate?: number
   // Sub-details for ACHAT with categories
   details?: Array<{
@@ -28,6 +30,13 @@ export interface CreateTransactionInput {
 export async function createTransaction(input: CreateTransactionInput) {
   const { type, currencyId, amount, commission = 0, note, userId, overrideRate, details } = input
 
+  // ── Garde de session (Q1 — bloquant) ─────────────────────────────────
+  // Lève une Error si aucune session ouverte pour cet utilisateur.
+  // L'action appelante doit fournir input.userId.
+  if (!input.userId) {
+    throw new Error('userId requis pour créer une transaction.')
+  }
+  const resolvedSessionId = input.cashSessionId ?? await assertOpenSession(input.userId)
   // 1. Récupération du taux
   const rateRecord = await getCurrentRate(currencyId)
   if (!rateRecord) throw new Error('Aucun taux défini pour cette devise')
@@ -66,6 +75,7 @@ export async function createTransaction(input: CreateTransactionInput) {
       data: {
         receiptNo, type, amount, rate, commission, totalMGA, note,
         currencyId, userId, exchangeRateId: rateRecord.id,
+        cashSessionId: resolvedSessionId,
         // [CORRECTION SÉCURITÉ] : On n'accepte les détails QUE si c'est un ACHAT
         details: (type === 'ACHAT' && details && details.length > 0) ? {
           create: details.map(d => ({
