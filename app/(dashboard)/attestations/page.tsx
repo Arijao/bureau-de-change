@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function AttestationsPage() {
   const user = await getSessionUser()
-  if (!user || user.role !== 'ADMIN') redirect('/dashboard')
+  if (!user) redirect('/dashboard')
   
   const [attestationsResult, settings, currencies] = await Promise.all([
     getAttestations(),

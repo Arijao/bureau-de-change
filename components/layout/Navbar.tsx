@@ -29,7 +29,7 @@ const COMMON_GROUPS: NavGroup[] = [
     items: [
       { href: '/transactions/new', label: 'Nouvelle transaction', icon: '💱' },
       { href: '/transactions',     label: 'Historique',           icon: '📋' },
-      { href: '/attestations',     label: 'Attestations',         icon: '📄', adminOnly: true },
+      { href: '/attestations',     label: 'Attestations',         icon: '📄' },
     ],
   },
   {

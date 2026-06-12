@@ -5,10 +5,9 @@ import { prisma } from '@/lib/prisma'
 import { saveAttestation } from '@/services/attestation.service'
 import { getSettings } from '@/services/settings.service'
 
-async function requireAdmin() {
+async function requireAuth() {
   const user = await getSessionUser()
   if (!user) throw new Error('Non authentifié')
-  if (user.role !== 'ADMIN') throw new Error('Accès refusé — Admin uniquement')
   return user
 }
 
@@ -27,7 +26,7 @@ export async function createAttestationAction(data: {
   returnDate?:     string
 }) {
   try {
-    const user = await requireAdmin()
+    const user = await requireAuth()
     
     if (data.amount <= 0) {
       return { error: 'Le montant doit être positif' }

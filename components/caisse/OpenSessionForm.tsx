@@ -122,7 +122,7 @@ export default function OpenSessionForm({ user, lastClosed, currencies }: Props)
       newInheritedAmounts[b.currencyId] = match.amount 
       const denoms = match.denominations ?? []
       const newDenoms = b.denominations.map(d => {
-        const found = denoms.find(dd => dd.denomination === d.denomination)
+        const found = denoms.find((dd: { denomination: number; quantity: number }) => dd.denomination === d.denomination)
         return found ? { ...d, quantity: found.quantity } : d
       })
 
