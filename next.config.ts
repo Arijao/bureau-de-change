@@ -5,6 +5,7 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
   : ['localhost:3000']
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
   experimental: {
     serverActions: {
       allowedOrigins,

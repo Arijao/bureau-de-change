@@ -21,7 +21,12 @@
     "db:generate": "prisma generate",
     "db:seed:prod": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.prod.ts",
     "prod:init": "npm run build && DATABASE_URL='file:./prisma/prod.db' prisma db push && DATABASE_URL='file:./prisma/prod.db' npm run db:seed:prod",
-    "prod:start": "DATABASE_URL='file:./prisma/prod.db' npm run start"
+    "prod:start": "DATABASE_URL='file:./prisma/prod.db' npm run start",
+    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron:build": "npm run build && electron-builder",
+    "electron:build:win": "npm run build && electron-builder --win",
+    "electron:build:mac": "npm run build && electron-builder --mac",
+    "electron:build:linux": "npm run build && electron-builder --linux"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

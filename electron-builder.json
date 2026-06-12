@@ -1,0 +1,29 @@
+{
+  "appId": "com.bureau-de-change.app",
+  "productName": "Travel EXChange",
+  "directories": {
+    "output": "dist-electron"
+  },
+  "files": [
+    "electron/**/*",
+    ".next/standalone/**/*",
+    ".next/static/**/*",
+    "public/**/*",
+    "prisma/**/*",
+    "package.json"
+  ],
+  "extraMetadata": {
+    "main": "electron/main.js"
+  },
+  "linux": {
+    "target": ["deb", "AppImage"],
+    "category": "Office"
+  },
+  "win": {
+    "target": "nsis"
+  },
+  "mac": {
+    "target": "dmg",
+    "category": "public.app-category.finance"
+  }
+}
