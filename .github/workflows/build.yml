@@ -2,44 +2,45 @@ name: Build Electron App
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
 
 jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
 
-      - name: Install dependencies
-        run: npm install --include=dev
+      - name: Install deps
+        run: npm ci
 
-      - name: Build Next.js (Standalone)
+      - name: Build Next.js
         run: npm run build
         env:
           DATABASE_URL: "file:./prisma/dev.db"
 
-      - name: Build Electron App
-        run: npx electron-builder --${{ matrix.os == 'ubuntu-latest' && 'linux' || (matrix.os == 'windows-latest' && 'win' || 'mac') }}
+      - name: Build Electron
+        run: npm run dist
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
+      - name: Upload Release Assets
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
         with:
-          name: installer-${{ matrix.os }}
-          path: dist-electron/*
-          if-no-files-found: error
+          files: dist-electron/**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
