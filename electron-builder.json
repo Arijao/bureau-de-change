@@ -8,9 +8,12 @@
     "electron/**/*",
     ".next/standalone/**/*",
     ".next/static/**/*",
+    ".next/server/**/*",
     "public/**/*",
     "prisma/**/*",
-    "package.json"
+    "package.json",
+    "!node_modules/@img/**",
+    "!node_modules/**/*.map"
   ],
   "extraMetadata": {
     "main": "electron/main.js"
