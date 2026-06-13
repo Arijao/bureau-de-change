@@ -29,6 +29,8 @@ jobs:
 
       - name: Build Next.js (Standalone)
         run: npm run build
+        env:
+          DATABASE_URL: "file:./prisma/dev.db"
 
       - name: Build Electron App
         run: npx electron-builder --${{ matrix.os == 'ubuntu-latest' && 'linux' || (matrix.os == 'windows-latest' && 'win' || 'mac') }}
