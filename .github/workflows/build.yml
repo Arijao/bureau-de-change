@@ -3,9 +3,9 @@ name: Build Electron App
 on:
   push:
     branches: ["main"]
-    tags:
-      - "v*"
   workflow_dispatch:
+  release:
+    types: [published]
 
 jobs:
   build:
@@ -24,8 +24,9 @@ jobs:
           node-version: 22.12.0
           cache: 'npm'
 
-      - name: Install deps
-        run: npm ci
+      # 🔥 FIX IMPORTANT: regenerate lockfile safely
+      - name: Install dependencies
+        run: npm install
 
       - name: Build Next.js
         run: npm run build
@@ -37,6 +38,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # 🔥 Upload only on tags/releases (stable download)
       - name: Upload Release Assets
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
