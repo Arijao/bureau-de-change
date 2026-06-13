@@ -1,134 +1,201 @@
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow, shell } = require('electron')
 const path = require('path')
 const { spawn } = require('child_process')
+const fs = require('fs')
+const http = require('http')
+
+// Désactiver accélération GPU (évite écran blanc sur Linux/Chromebook)
+app.commandLine.appendSwitch('disable-gpu')
+app.commandLine.appendSwitch('disable-software-rasterizer')
 
 let mainWindow
 let nextServer
+
+function getPaths() {
+  if (app.isPackaged) {
+    const userDb = path.join(app.getPath('userData'), 'bureau-de-change.db')
+    const seedDb = path.join(process.resourcesPath, 'prisma', 'dev.db')
+
+    // Copier la DB seed à la première installation
+    if (!fs.existsSync(userDb) && fs.existsSync(seedDb)) {
+      try {
+        fs.mkdirSync(path.dirname(userDb), { recursive: true })
+        fs.copyFileSync(seedDb, userDb)
+        console.log('[main] DB initialisée depuis seed:', userDb)
+      } catch (e) {
+        console.error('[main] Erreur copie DB:', e.message)
+      }
+    }
+
+    return {
+      serverPath:  path.join(process.resourcesPath, 'standalone', 'server.js'),
+      serverCwd:   path.join(process.resourcesPath, 'standalone'),
+      databaseUrl: `file:${userDb}`,
+    }
+  }
+  return {
+    serverPath:  path.join(__dirname, '..', '.next', 'standalone', 'server.js'),
+    serverCwd:   path.join(__dirname, '..', '.next', 'standalone'),
+    databaseUrl: process.env.DATABASE_URL || 'file:./prisma/dev.db',
+  }
+}
+
+function startNextServer() {
+  return new Promise((resolve, reject) => {
+    const { serverPath, serverCwd, databaseUrl } = getPaths()
+
+    console.log('[main] Starting Next.js from:', serverPath)
+    console.log('[main] execPath:', process.execPath)
+
+    if (!fs.existsSync(serverPath)) {
+      console.error('[main] server.js introuvable:', serverPath)
+      try {
+        const standaloneDir = path.dirname(serverPath)
+        if (fs.existsSync(standaloneDir)) {
+          console.log('[main] Contenu de standalone/:', fs.readdirSync(standaloneDir))
+        } else {
+          console.error('[main] Dossier standalone introuvable:', standaloneDir)
+          const resourcesDir = process.resourcesPath
+          console.log('[main] Contenu de resources/:', fs.existsSync(resourcesDir) ? fs.readdirSync(resourcesDir) : 'ABSENT')
+        }
+      } catch (e) {
+        console.error('[main] Erreur listing:', e.message)
+      }
+      return reject(new Error('server.js not found'))
+    }
+
+    nextServer = spawn(process.execPath, [serverPath], {
+      env: {
+        ...process.env,
+        ELECTRON_RUN_AS_NODE: '1',
+        PORT:                 '3000',
+        HOSTNAME:             '127.0.0.1',
+        NODE_ENV:             'production',
+        DATABASE_URL:         databaseUrl,
+        // Permettre à Turbopack de trouver @prisma/client hashé
+        NODE_PATH:            path.join(process.resourcesPath, 'standalone', 'node_modules'),
+      },
+      cwd: serverCwd,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    })
+
+    let resolved = false
+    const done = () => { if (!resolved) { resolved = true; resolve() } }
+
+    nextServer.stdout.on('data', (data) => {
+      console.log('[next]', data.toString().trimEnd())
+    })
+
+    nextServer.stderr.on('data', (data) => {
+      console.error('[next:err]', data.toString().trimEnd())
+    })
+
+    nextServer.on('error', (err) => {
+      console.error('[main] spawn error:', err)
+      if (!resolved) reject(err)
+    })
+
+    nextServer.on('exit', (code) => {
+      console.log('[next] exited with code', code)
+      if (!resolved) reject(new Error(`Server exited early (code ${code})`))
+    })
+
+    // Polling TCP : attend que le port 3000 soit réellement en écoute
+    const startTime = Date.now()
+    const MAX_WAIT_MS = 20_000
+    const POLL_INTERVAL_MS = 300
+
+    const poll = () => {
+      const req = http.get('http://127.0.0.1:3000', () => {
+        console.log('[main] Server ready on port 3000')
+        done()
+      })
+      req.on('error', () => {
+        if (Date.now() - startTime > MAX_WAIT_MS) {
+          console.warn('[main] Timeout — opening window anyway')
+          done()
+          return
+        }
+        setTimeout(poll, POLL_INTERVAL_MS)
+      })
+      req.setTimeout(500, () => {
+        req.destroy()
+        setTimeout(poll, POLL_INTERVAL_MS)
+      })
+    }
+
+    setTimeout(poll, 500)
+  })
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
+    // PAS de show:false
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
     },
   })
 
-  // En production, charger localhost:3000 (servi par le serveur Next.js standalone)
-  // En développement, charger localhost:3000 directement
-  const startUrl = process.env.ELECTRON_START_URL || 'http://127.0.0.1:3000'
-  mainWindow.loadURL(startUrl)
-
-  mainWindow.on('closed', () => {
-    mainWindow = null
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url)
+    return { action: 'deny' }
   })
-}
 
-function startNextServer() {
-  return new Promise((resolve, reject) => {
-    try {
-      // Chemin vers le serveur Next.js standalone
-      const serverPath = path.join(__dirname, '..', '.next', 'standalone', 'server.js')
-      
-      console.log('Starting Next.js server from:', serverPath)
-      
-      nextServer = spawn('node', [serverPath], {
-        env: { 
-          ...process.env, 
-          PORT: '3000', 
-          HOSTNAME: '127.0.0.1',
-          NODE_ENV: 'production'
-        },
-        cwd: path.join(__dirname, '..'),
-        stdio: ['pipe', 'pipe', 'pipe'],
-        shell: true
-      })
+  const url = 'http://127.0.0.1:3000'
 
-      let serverStarted = false
-
-      nextServer.stdout.on('data', (data) => {
-        const output = data.toString()
-        console.log('Next.js:', output)
-        
-        // Détecter quand le serveur est prêt
-        if (output.includes('Local:') || output.includes('ready')) {
-          if (!serverStarted) {
-            serverStarted = true
-            console.log('Server is ready!')
-            resolve()
-          }
-        }
-      })
-
-      nextServer.stderr.on('data', (data) => {
-        console.error('Next.js error:', data.toString())
-      })
-
-      nextServer.on('error', (err) => {
-        console.error('Failed to start Next.js server:', err)
-        reject(err)
-      })
-
-      nextServer.on('exit', (code) => {
-        console.log('Next.js server exited with code:', code)
-        if (!serverStarted) {
-          reject(new Error(`Server exited with code ${code}`))
-        }
-      })
-
-      // Timeout de sécurité
-      setTimeout(() => {
-        if (!serverStarted) {
-          console.log('Server startup timeout, continuing anyway...')
-          resolve()
-        }
-      }, 10000)
-      
-    } catch (error) {
-      console.error('Error starting server:', error)
-      reject(error)
+  mainWindow.webContents.on('did-fail-load', (_event, errorCode) => {
+    if (errorCode === -102) {
+      setTimeout(() => { if (mainWindow) mainWindow.loadURL(url) }, 1000)
     }
   })
+
+  mainWindow.loadURL(url)
+  mainWindow.on('closed', () => { mainWindow = null })
 }
 
 app.whenReady().then(async () => {
-  try {
-    // En production, démarrer le serveur Next.js standalone
-    if (process.env.NODE_ENV !== 'development') {
-      console.log('Starting in production mode...')
+  if (app.isPackaged) {
+    try {
       await startNextServer()
+    } catch (err) {
+      console.error('[main] Server failed, continuing:', err)
     }
-    
-    // Créer la fenêtre après un court délai
-    setTimeout(() => {
-      createWindow()
-    }, 1000)
-    
-  } catch (error) {
-    console.error('Failed to initialize app:', error)
-    // Créer la fenêtre même en cas d'erreur
-    createWindow()
+  } else {
+    // En dev : attendre que Next.js soit prêt
+    await new Promise((resolve) => {
+      const startTime = Date.now()
+      const poll = () => {
+        const req = http.get('http://127.0.0.1:3000', () => resolve())
+        req.on('error', () => {
+          if (Date.now() - startTime > 30_000) return resolve()
+          setTimeout(poll, 500)
+        })
+        req.setTimeout(500, () => { req.destroy(); setTimeout(poll, 500) })
+      }
+      poll()
+    })
   }
 
+  createWindow()
+
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow()
-    }
+    if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
 
-app.on('window-all-closed', () => {
+function cleanup() {
   if (nextServer) {
     nextServer.kill()
+    nextServer = null
   }
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
+}
+
+app.on('window-all-closed', () => {
+  cleanup()
+  if (process.platform !== 'darwin') app.quit()
 })
 
-app.on('before-quit', () => {
-  if (nextServer) {
-    nextServer.kill()
-  }
-})
+app.on('before-quit', cleanup)
