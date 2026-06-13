@@ -7,27 +7,41 @@
     "name": "Arijao Rado",
     "email": "arijao@gmail.com"
   },
+
+  "main": "electron/main.js",
+
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+
     "lint": "next lint",
+
+    "dist": "electron-builder",
+
+    "electron:dev": "concurrently \"next dev\" \"wait-on http://localhost:3000 && electron .\"",
+
+    "electron:build": "npm run build && electron-builder",
+    "electron:build:win": "npm run build && electron-builder --win",
+    "electron:build:mac": "npm run build && electron-builder --mac",
+    "electron:build:linux": "npm run build && electron-builder --linux",
+
     "db:push": "prisma generate && prisma db push",
     "db:seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts",
     "db:studio": "prisma studio",
     "db:reset": "prisma generate && prisma db push --force-reset && npm run db:seed",
+
     "setup": "npm install && npm run db:push && npm run db:seed",
+
     "postinstall": "prisma generate",
+
     "db:generate": "prisma generate",
     "db:seed:prod": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.prod.ts",
-    "prod:init": "npm run build && DATABASE_URL='file:./prisma/prod.db' prisma db push && DATABASE_URL='file:./prisma/prod.db' npm run db:seed:prod",
-    "prod:start": "DATABASE_URL='file:./prisma/prod.db' npm run start",
-    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
-    "electron:build": "npm run build && electron-builder",
-    "electron:build:win": "npm run build && electron-builder --win",
-    "electron:build:mac": "npm run build && electron-builder --mac",
-    "electron:build:linux": "npm run build && electron-builder --linux"
+
+    "prod:init": "npm run build && DATABASE_URL=file:./prisma/prod.db prisma db push && DATABASE_URL=file:./prisma/prod.db npm run db:seed:prod",
+    "prod:start": "DATABASE_URL=file:./prisma/prod.db npm run start"
   },
+
   "dependencies": {
     "@prisma/client": "^5.22.0",
     "@types/qrcode": "^1.5.6",
@@ -41,22 +55,50 @@
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
+
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+
     "electron": "^41.7.1",
     "electron-builder": "^26.15.3",
+
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
+
     "tailwindcss": "^4",
+
     "ts-node": "^10.9.2",
     "tsx": "^4.22.4",
-    "typescript": "^5"
+    "typescript": "^5",
+
+    "concurrently": "^9.0.0",
+    "wait-on": "^7.2.0"
   },
+
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
+  },
+
+  "build": {
+    "appId": "com.bureau.change",
+    "productName": "Bureau de Change",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      ".next/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
   }
 }
