@@ -190,3 +190,44 @@ export async function updateLogoAction(data: {
     return { error: 'Erreur lors de la sauvegarde du logo' }
   }
 }
+
+export async function updateUserAction(
+  userId: string,
+  data: { name?: string; username?: string }
+) {
+  const user = await getSessionUser()
+  if (!user || user.role !== 'ADMIN') return { error: 'Accès refusé' }
+
+  const name     = data.name?.trim()
+  const username = data.username?.toLowerCase().trim()
+
+  if (!name && !username) return { error: 'Aucune modification fournie' }
+  if (name     && name.length < 2)     return { error: 'Le nom doit contenir au moins 2 caractères' }
+  if (username && username.length < 3) return { error: "L'identifiant doit contenir au moins 3 caractères" }
+  if (username && !/^[a-z0-9._-]+$/.test(username)) {
+    return { error: "L'identifiant ne peut contenir que des lettres minuscules, chiffres, points, tirets" }
+  }
+
+  try {
+    // Vérifier unicité du username si modifié
+    if (username) {
+      const existing = await prisma.user.findUnique({ where: { username } })
+      if (existing && existing.id !== userId) {
+        return { error: `L'identifiant "${username}" est déjà utilisé` }
+      }
+    }
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(name     && { name }),
+        ...(username && { username }),
+      },
+    })
+
+    revalidatePath('/settings')
+    return { success: true }
+  } catch (e: any) {
+    return { error: e.message ?? 'Erreur modification utilisateur' }
+  }
+}

@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import {
   updateSettingsAction, createUserAction, changePasswordAction,
-  toggleUserActiveAction, updateLogoAction,
+  toggleUserActiveAction, updateLogoAction, updateUserAction,
 } from '@/actions/settings.actions'
 
 interface UserRow { id: string; username: string; name: string; role: string; active: boolean; createdAt: Date }
@@ -18,7 +18,7 @@ interface Props {
   currentUserId: string
 }
 
-type UserModal = null | { mode: 'create' } | { mode: 'password'; user: UserRow }
+type UserModal = null | { mode: 'create' } | { mode: 'password'; user: UserRow } | { mode: 'edit'; user: UserRow }
 
 export default function SettingsClient({ settings, users: initUsers, currentUserId }: Props) {
   const [bureauName, setBureauName] = useState(settings.bureauName)
@@ -55,6 +55,8 @@ export default function SettingsClient({ settings, users: initUsers, currentUser
   // Password form
   const [newPass, setNewPass]     = useState('')
   const [currentPass, setCurrentPass] = useState('')
+  const [eName, setEName]         = useState('')
+  const [eUsername, setEUsername] = useState('')
   const [modalError, setModalError]   = useState('')
 
   function toast(text: string, type: 'success'|'error' = 'success') {
@@ -157,6 +159,25 @@ export default function SettingsClient({ settings, users: initUsers, currentUser
     if (res.error) { toast(res.error, 'error'); return }
     setUsers(prev => prev.map(x => x.id === u.id ? { ...x, active: !x.active } : x))
     toast(`${u.name} ${u.active ? 'désactivé' : 'réactivé'}`)
+  }
+
+  async function handleUpdateUser() {
+    if (userModal?.mode !== 'edit') return
+    setLoading(true)
+    setModalError('')
+    const res = await updateUserAction(userModal.user.id, {
+      name:     eName     !== userModal.user.name     ? eName     : undefined,
+      username: eUsername !== userModal.user.username ? eUsername : undefined,
+    })
+    setLoading(false)
+    if (res.error) { setModalError(res.error); return }
+    setUsers(prev => prev.map(x =>
+      x.id === userModal.user.id
+        ? { ...x, name: eName || x.name, username: eUsername || x.username }
+        : x
+    ))
+    setUserModal(null)
+    toast(`Compte de ${eName || userModal.user.name} modifié`)
   }
 
   const isSelfPassword = userModal?.mode === 'password' && userModal.user.id === currentUserId
@@ -353,6 +374,16 @@ export default function SettingsClient({ settings, users: initUsers, currentUser
                   <td><span className={`chip ${u.active ? 'chip-green' : 'chip-red'}`}>{u.active ? 'Actif' : 'Inactif'}</span></td>
                   <td>
                     <div style={{display:'flex',gap:6}}>
+                      <button className="btn btn-sm btn-outline"
+                        title="Modifier nom et identifiant"
+                        onClick={() => {
+                          setEName(u.name)
+                          setEUsername(u.username)
+                          setModalError('')
+                          setUserModal({ mode: 'edit', user: u })
+                        }}>
+                        ✏️
+                      </button>
                       <button className="btn btn-sm btn-outline" title="Changer mot de passe"
                         onClick={() => { setNewPass(''); setCurrentPass(''); setModalError(''); setUserModal({ mode: 'password', user: u }) }}>
                         🔑
@@ -458,6 +489,51 @@ export default function SettingsClient({ settings, users: initUsers, currentUser
             <div className="btn-group">
               <button className="btn btn-primary" onClick={handleChangePassword}
                 disabled={loading || newPass.length < 6 || (isSelfPassword && currentPass.length < 1)}>
+                {loading ? '…' : 'Enregistrer'}
+              </button>
+              <button className="btn btn-outline" onClick={() => setUserModal(null)}>Annuler</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL : MODIFIER UTILISATEUR ── */}
+      {userModal?.mode === 'edit' && (
+        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setUserModal(null)}>
+          <div className="modal" style={{maxWidth:440}}>
+            <div className="modal-header">
+              <h3 className="modal-title">✏️ Modifier — {userModal.user.name}</h3>
+              <button className="modal-close" onClick={() => setUserModal(null)}>×</button>
+            </div>
+            {modalError && (
+              <div className="alert alert-error" style={{marginBottom:12}}>❌ {modalError}</div>
+            )}
+            <div className="form-group">
+              <label className="form-label">Nom complet</label>
+              <input className="form-control"
+                value={eName}
+                onChange={e => { setEName(e.target.value); setModalError('') }}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">
+                Identifiant (login)
+                <span className="text-muted fs-11" style={{marginLeft:6}}>
+                  (lettres minuscules, chiffres, points, tirets)
+                </span>
+              </label>
+              <input className="form-control"
+                value={eUsername}
+                onChange={e => { setEUsername(e.target.value.toLowerCase()); setModalError('') }}
+              />
+            </div>
+            <div className="alert alert-info" style={{marginBottom:12, fontSize:12}}>
+              Le mot de passe reste inchangé. Utilisez 🔑 pour le modifier séparément.
+            </div>
+            <div className="btn-group">
+              <button className="btn btn-primary"
+                onClick={handleUpdateUser}
+                disabled={loading || (!eName.trim() && !eUsername.trim())}>
                 {loading ? '…' : 'Enregistrer'}
               </button>
               <button className="btn btn-outline" onClick={() => setUserModal(null)}>Annuler</button>
