@@ -9,11 +9,7 @@ on:
 
 jobs:
   build:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-      fail-fast: false   # un OS qui échoue n'annule pas les autres
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-latest   # production Windows uniquement
 
     steps:
       - name: Checkout code
@@ -25,31 +21,22 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      # npm ci : install déterministe (respecte package-lock.json, plus rapide en CI)
       - name: Install dependencies
         run: npm ci
 
       # ── ÉTAPE 1 : client Prisma ─────────────────────────────────────────────
-      # Doit précéder le build Next.js car Next.js importe @prisma/client
       - name: Generate Prisma client
         run: npx prisma generate
         env:
           DATABASE_URL: "file:./prisma/dev.db"
 
       # ── ÉTAPE 2 : build Next.js standalone ──────────────────────────────────
-      # npm run build = "next build && node scripts/copy-standalone-assets.js"
-      # → produit .next/standalone/ avec .next/static/ et public/ déjà intégrés
-      # NE PAS ajouter de "cp -r" manuel après : ce serait une double copie
       - name: Build Next.js (Standalone + Assets)
         run: npm run build
         env:
           DATABASE_URL: "file:./prisma/dev.db"
 
       # ── ÉTAPE 3 : base de données seed ──────────────────────────────────────
-      # DATABASE_URL "file:./prisma/dev.db" → Prisma résout le chemin relativement
-      # à prisma/schema.prisma → DB créée dans prisma/prisma/dev.db
-      # C'est exactement ce chemin que electron/main.js lit via :
-      #   path.join(process.resourcesPath, 'prisma', 'prisma', 'dev.db')
       - name: Create and seed database
         shell: bash
         run: |
@@ -58,25 +45,18 @@ jobs:
         env:
           DATABASE_URL: "file:./prisma/dev.db"
 
-      # ── ÉTAPE 4 : packaging Electron ────────────────────────────────────────
-      # afterPack.js (déclaré dans electron-builder.json) recopie les node_modules
-      # du standalone que electron-builder supprime sinon silencieusement
-      - name: Build Electron App
-        shell: bash
-        run: |
-          if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
-            npx electron-builder --linux
-          elif [ "${{ matrix.os }}" = "windows-latest" ]; then
-            npx electron-builder --win
-          else
-            npx electron-builder --mac
-          fi
+      # ── ÉTAPE 4 : packaging Electron + publication GitHub Releases ───────────
+      # --publish always → publie sur GitHub Releases à chaque build
+      # --publish onTag  → publie uniquement sur git tag (ex: v1.2.3)
+      - name: Build & Publish Electron
+        run: npx electron-builder --win --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Artifacts
+      # Backup optionnel : conserve aussi l'artifact dans l'UI Actions (90j)
+      - name: Upload Artifact (backup)
         uses: actions/upload-artifact@v4
         with:
-          name: installer-${{ matrix.os }}
-          path: dist-electron/*
+          name: installer-windows
+          path: dist-electron/*.exe
           if-no-files-found: error

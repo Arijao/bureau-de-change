@@ -5,33 +5,21 @@
   "directories": {
     "output": "dist-electron"
   },
-  "files": [
-    "electron/**/*",
-    "package.json"
-  ],
+  "publish": {
+    "provider": "github",
+    "owner": "Arijao",
+    "repo": "bureau-de-change",
+    "private": true,
+    "releaseType": "draft"
+  },
+  "files": ["electron/**/*", "package.json"],
   "extraResources": [
-    {
-      "from": ".next/standalone",
-      "to": "standalone"
-    },
-    {
-      "from": "prisma",
-      "to": "prisma"
-    }
+    { "from": ".next/standalone", "to": "standalone" },
+    { "from": "prisma", "to": "prisma" }
   ],
-  "extraMetadata": {
-    "main": "electron/main.js"
-  },
+  "extraMetadata": { "main": "electron/main.js" },
   "afterPack": "scripts/afterPack.js",
-  "linux": {
-    "target": ["deb", "AppImage"],
-    "category": "Office"
-  },
-  "win": {
-    "target": "nsis"
-  },
-  "mac": {
-    "target": "dmg",
-    "category": "public.app-category.finance"
-  }
+  "linux":  { "target": ["deb", "AppImage"], "category": "Office" },
+  "win":    { "target": "nsis" },
+  "mac":    { "target": "dmg", "category": "public.app-category.finance" }
 }
