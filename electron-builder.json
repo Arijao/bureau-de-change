@@ -1,19 +1,23 @@
 {
   "appId": "com.bureau-de-change.app",
   "productName": "Travel EXChange",
+  "asar": false,
   "directories": {
     "output": "dist-electron"
   },
   "files": [
     "electron/**/*",
-    ".next/standalone/**/*",
-    ".next/static/**/*",
-    ".next/server/**/*",
-    "public/**/*",
-    "prisma/**/*",
-    "package.json",
-    "!node_modules/@img/**",
-    "!node_modules/**/*.map"
+    "package.json"
+  ],
+  "extraResources": [
+    {
+      "from": ".next/standalone",
+      "to": "standalone"
+    },
+    {
+      "from": "prisma",
+      "to": "prisma"
+    }
   ],
   "extraMetadata": {
     "main": "electron/main.js"

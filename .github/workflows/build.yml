@@ -32,6 +32,25 @@ jobs:
         env:
           DATABASE_URL: "file:./prisma/dev.db"
 
+      # ── NOUVEAU : créer la base de données seed pour le packaging ──────────
+      - name: Créer la base de données seed
+        shell: bash
+        run: |
+          npx prisma generate
+          npx prisma db push
+          npm run db:seed:prod
+        env:
+          DATABASE_URL: "file:./prisma/dev.db"
+
+      # ── NOUVEAU : copier les assets dans le dossier standalone ────────────
+      # Le server.js de Next.js standalone cherche ces dossiers dans son CWD.
+      # Sans cette étape, l'app démarre mais ne sert aucun CSS/JS/image.
+      - name: Préparer les assets du standalone
+        shell: bash
+        run: |
+          cp -r .next/static .next/standalone/.next/static
+          cp -r public .next/standalone/public
+
       - name: Build Electron App
         run: npx electron-builder --${{ matrix.os == 'ubuntu-latest' && 'linux' || (matrix.os == 'windows-latest' && 'win' || 'mac') }}
         env:
