@@ -49,3 +49,9 @@ structure.txt
 # public/next.svg
 # public/vercel.svg
 # public/window.svg
+
+# Electron build output
+dist-electron/
+
+# Prisma DB générée (chemin résolu par schema.prisma)
+prisma/prisma/

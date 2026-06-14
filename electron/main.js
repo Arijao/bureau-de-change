@@ -14,7 +14,7 @@ let nextServer
 function getPaths() {
   if (app.isPackaged) {
     const userDb = path.join(app.getPath('userData'), 'bureau-de-change.db')
-    const seedDb = path.join(process.resourcesPath, 'prisma', 'dev.db')
+    const seedDb = path.join(process.resourcesPath, 'prisma', 'prisma', 'dev.db')
 
     // Copier la DB seed à la première installation
     if (!fs.existsSync(userDb) && fs.existsSync(seedDb)) {

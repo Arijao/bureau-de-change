@@ -22,6 +22,7 @@
   "extraMetadata": {
     "main": "electron/main.js"
   },
+  "afterPack": "scripts/afterPack.js",
   "linux": {
     "target": ["deb", "AppImage"],
     "category": "Office"

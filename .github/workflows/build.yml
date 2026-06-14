@@ -2,7 +2,7 @@ name: Build Electron App
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
     tags:
       - 'v*'
   workflow_dispatch:
@@ -12,6 +12,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+      fail-fast: false   # un OS qui échoue n'annule pas les autres
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -24,35 +25,52 @@ jobs:
           node-version: 20
           cache: 'npm'
 
+      # npm ci : install déterministe (respecte package-lock.json, plus rapide en CI)
       - name: Install dependencies
-        run: npm install --include=dev
+        run: npm ci
 
-      - name: Build Next.js (Standalone)
+      # ── ÉTAPE 1 : client Prisma ─────────────────────────────────────────────
+      # Doit précéder le build Next.js car Next.js importe @prisma/client
+      - name: Generate Prisma client
+        run: npx prisma generate
+        env:
+          DATABASE_URL: "file:./prisma/dev.db"
+
+      # ── ÉTAPE 2 : build Next.js standalone ──────────────────────────────────
+      # npm run build = "next build && node scripts/copy-standalone-assets.js"
+      # → produit .next/standalone/ avec .next/static/ et public/ déjà intégrés
+      # NE PAS ajouter de "cp -r" manuel après : ce serait une double copie
+      - name: Build Next.js (Standalone + Assets)
         run: npm run build
         env:
           DATABASE_URL: "file:./prisma/dev.db"
 
-      # ── NOUVEAU : créer la base de données seed pour le packaging ──────────
-      - name: Créer la base de données seed
+      # ── ÉTAPE 3 : base de données seed ──────────────────────────────────────
+      # DATABASE_URL "file:./prisma/dev.db" → Prisma résout le chemin relativement
+      # à prisma/schema.prisma → DB créée dans prisma/prisma/dev.db
+      # C'est exactement ce chemin que electron/main.js lit via :
+      #   path.join(process.resourcesPath, 'prisma', 'prisma', 'dev.db')
+      - name: Create and seed database
         shell: bash
         run: |
-          npx prisma generate
           npx prisma db push
           npm run db:seed:prod
         env:
           DATABASE_URL: "file:./prisma/dev.db"
 
-      # ── NOUVEAU : copier les assets dans le dossier standalone ────────────
-      # Le server.js de Next.js standalone cherche ces dossiers dans son CWD.
-      # Sans cette étape, l'app démarre mais ne sert aucun CSS/JS/image.
-      - name: Préparer les assets du standalone
+      # ── ÉTAPE 4 : packaging Electron ────────────────────────────────────────
+      # afterPack.js (déclaré dans electron-builder.json) recopie les node_modules
+      # du standalone que electron-builder supprime sinon silencieusement
+      - name: Build Electron App
         shell: bash
         run: |
-          cp -r .next/static .next/standalone/.next/static
-          cp -r public .next/standalone/public
-
-      - name: Build Electron App
-        run: npx electron-builder --${{ matrix.os == 'ubuntu-latest' && 'linux' || (matrix.os == 'windows-latest' && 'win' || 'mac') }}
+          if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
+            npx electron-builder --linux
+          elif [ "${{ matrix.os }}" = "windows-latest" ]; then
+            npx electron-builder --win
+          else
+            npx electron-builder --mac
+          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
