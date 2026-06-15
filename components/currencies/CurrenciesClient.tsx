@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { formatNumber, formatMGA } from '@/lib/utils'
 import { addRateAction, toggleCurrencyAction, deleteCurrencyAction, createCurrencyAction, updateCurrencyAction, adjustStockAction, updateDenominationCategoriesAction, getPhysicalDenominationsAction } from '@/actions/currency.actions'
+import { getFlagClass, hasFlagIcon } from '@/lib/currency-flags'
 
 interface CategoryRate { categoryId: number; buyRate: number }
 interface Rate { id: number; buyRate: number; sellRate: number; createdAt: Date; note?: string | null; user?: { name: string } | null; categoryRates?: CategoryRate[] }
@@ -170,7 +171,11 @@ export default function CurrenciesClient({ currencies: init, isAdmin, rateHistor
           return (
             <div key={c.id} className={`currency-card ${!c.isActive ? 'currency-inactive' : ''}`}>
               <div className="currency-card-header">
-                <span className="currency-flag">{c.flag}</span>
+                <span className="currency-flag">
+                  {hasFlagIcon(c.code)
+                    ? <span className={getFlagClass(c.code)} style={{ fontSize: 24 }} />
+                    : c.flag}
+                </span>
                 <div className="currency-info">
                   <div className="currency-code">{c.code} <span className="currency-symbol">{c.symbol}</span></div>
                   <div className="currency-name">{c.name}</div>

@@ -66,7 +66,7 @@ export default async function HrDashboard() {
 
         <Link href="/hr/attendance" className="card" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="card-header">
-            <span className="card-icon card-icon-amber">️</span>
+            <span className="card-icon card-icon-amber">️⏱️</span>
             <h2 className="card-title">Pointage</h2>
           </div>
           <p className="text-muted" style={{ margin: 0 }}>Présences et absences</p>

@@ -1,6 +1,7 @@
 /* ══════════════════════════════════════════════════════════
    BUREAU DE CHANGE — Global Styles
    ══════════════════════════════════════════════════════════ */
+@import 'flag-icons/css/flag-icons.min.css';
 @import "tailwindcss";
 
 :root {
