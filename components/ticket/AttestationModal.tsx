@@ -409,7 +409,7 @@ ${(destination || travelNature || transportTitle || ticketNo || departureDate ||
     <tbody>
       <tr>
         <td>Vente de devises</td>
-        <td>${formatCurrency(tx.amount, tx.currency.code)} (${tx.currency.name})</td>
+        <td>${tx.currency.flag} ${formatCurrency(tx.amount, tx.currency.code)} (${tx.currency.name})</td>
         <td>${tx.rate > 0 ? `${formatNumber(tx.rate)} Ar/${tx.currency.code}` : '—'}</td>
         <td>${tx.rate > 0 ? formatMGA(tx.amount * tx.rate) : formatMGA(total)}</td>
       </tr>

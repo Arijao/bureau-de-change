@@ -156,7 +156,7 @@ export default function TransactionForm({ currencies, userName, bureauName, bure
             <select className="form-control" value={currencyId} onChange={e => setCurrencyId(parseInt(e.target.value) || '')}>
               <option value="">— Choisir —</option>
               {currencies.map(c => (
-                <option key={c.id} value={c.id}>{c.code} — {c.name} {c.stock?.isLow ? '⚠️' : ''}</option>
+                <option key={c.id} value={c.id}>{c.flag} {c.code} — {c.name} {c.stock?.isLow ? '⚠️' : ''}</option>
               ))}
             </select>
           </div>

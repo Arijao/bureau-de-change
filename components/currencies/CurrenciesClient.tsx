@@ -12,11 +12,12 @@ interface DenomCat { id: number; currencyId: number; name: string; denominations
 interface CurrencyRow { id: number; code: string; name: string; symbol: string | null; flag: string; isActive: boolean; isBase: boolean; currentRate: Rate | null; stock: Stock | null; denominationCategories?: DenomCat[] }
 interface RateHistRow { id: number; createdAt: Date; buyRate: number; sellRate: number; note?: string | null; currency: { flag: string; code: string }; user?: { name: string } | null }
 
-interface Props { currencies: CurrencyRow[]; isAdmin: boolean; rateHistory: RateHistRow[] }
+interface Settings { bureauName: string; address: string; phone: string; footer: string; logoBase64?: string | null }
+interface Props { currencies: CurrencyRow[]; isAdmin: boolean; rateHistory: RateHistRow[]; settings: Settings }
 
 type Modal = 'rate' | 'add' | 'edit' | 'stock' | 'delete' | 'rateHistory' | 'categories' | null
 
-export default function CurrenciesClient({ currencies: init, isAdmin, rateHistory }: Props) {
+export default function CurrenciesClient({ currencies: init, isAdmin, rateHistory, settings }: Props) {
   const [currencies, setCurrencies] = useState(init)
   const [modal, setModal] = useState<Modal>(null)
   const [selected, setSelected] = useState<CurrencyRow | null>(null)
@@ -145,13 +146,76 @@ export default function CurrenciesClient({ currencies: init, isAdmin, rateHistor
   }
 
   const spread = (b: string, s: string) => { const v = parseFloat(s) - parseFloat(b); return isNaN(v) ? '—' : formatNumber(v) }
-
+  function handlePrintRates() {
+      const activeCurrencies = currencies.filter(c => !c.isBase && c.isActive && c.currentRate)
+      const now = new Date()
+      const dateStr = now.toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+      const timeStr = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+      const rows = activeCurrencies.map(c => {
+        const buy = c.currentRate?.buyRate ?? 0
+        const sell = c.currentRate?.sellRate ?? 0
+        const spread = sell - buy
+        const flagClass = hasFlagIcon(c.code) ? getFlagClass(c.code) : ''
+          return `<tr>
+            <td><span class="${flagClass}" style="font-size:18px;margin-right:8px;vertical-align:middle;"></span><strong>${c.name}</strong></td>
+          <td style="font-weight:700;">${c.code}</td>
+          <td style="font-size:16px;font-weight:700;color:#1a3a6b;">${c.symbol ?? '—'}</td>
+          <td style="font-weight:600;color:#15803d;">${formatNumber(buy)} Ar</td>
+          <td style="font-weight:600;color:#dc2626;">${formatNumber(sell)} Ar</td>
+        </tr>`
+      }).join('')
+      const logoHtml = settings.logoBase64
+        ? `<img src="${settings.logoBase64}" style="height:56px;object-fit:contain;margin-bottom:6px;" />`
+        : ''
+      const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
+  <title>Cours de change — ${now.toLocaleDateString('fr-FR')}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.5.0/css/flag-icons.min.css">
+  <style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Segoe UI',Arial,sans-serif;color:#1a1a2e;padding:28px 32px;font-size:13px;}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #1a3a6b;padding-bottom:14px;margin-bottom:18px;}
+  .bureau-name{font-size:17px;font-weight:700;color:#1a3a6b;margin-bottom:4px;}
+  .bureau-info p{font-size:12px;color:#555;margin-top:2px;}
+  .doc-title{text-align:center;margin:18px 0 20px;}
+  .doc-title h2{font-size:15px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#1a3a6b;border:2px solid #1a3a6b;display:inline-block;padding:8px 28px;}
+  .doc-title .date{font-size:12px;color:#555;margin-top:7px;}
+  table{width:100%;border-collapse:collapse;}
+  thead tr{background:#1a3a6b;color:white;}
+  thead th{padding:9px 12px;text-align:left;font-size:12px;font-weight:600;letter-spacing:0.5px;}
+  tbody tr:nth-child(even){background:#f0f4fb;}
+  tbody td{padding:9px 12px;border-bottom:1px solid #e5e7eb;font-size:13px;}
+  .note{font-size:11px;color:#9ca3af;margin-top:14px;font-style:italic;}
+  .footer{margin-top:20px;border-top:1px solid #e5e7eb;padding-top:10px;display:flex;justify-content:space-between;font-size:11px;color:#9ca3af;}
+  @media print{body{padding:0;}}
+  </style></head><body>
+  <div class="header">
+    <div class="bureau-info">
+      ${logoHtml}
+      <div class="bureau-name">${settings.bureauName}</div>
+      <p>📞 ${settings.phone}</p>
+    </div>
+  </div>
+  <div class="doc-title">
+    <h2>Cours de change du jour</h2>
+    <div class="date">${dateStr.charAt(0).toUpperCase() + dateStr.slice(1)}</div>
+  </div>
+  <table>
+    <thead><tr><th>Devise</th><th>Code</th><th>Symbole</th><th>Achat</th><th>Vente</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <p class="note">* Les taux sont donnés à titre indicatif et peuvent être modifiés sans préavis.</p>
+  <script>window.onload=function(){window.print();}</script>
+  </body></html>`
+      const win = window.open('', '_blank', 'width=820,height=650')
+      if (win) { win.document.write(html); win.document.close() }
+    }
   return (
     <div>
       <div className="page-header">
         <div><h1 className="page-title">💹 Devises & Taux</h1><p className="page-subtitle">{currencies.length} devise(s) configurée(s)</p></div>
         <div className="btn-group">
           <button className="btn btn-outline btn-sm" onClick={() => setModal('rateHistory')}>📜 Historique taux</button>
+<button className="btn btn-outline btn-sm" onClick={handlePrintRates}>🖨️ Cours du jour</button>
           {isAdmin && <button className="btn btn-primary" onClick={() => { setACode(''); setAName(''); setASym(''); setAFlag(''); setABuy(''); setASell(''); setAStock(''); setAAlert(''); setModal('add') }}>+ Ajouter devise</button>}
         </div>
       </div>

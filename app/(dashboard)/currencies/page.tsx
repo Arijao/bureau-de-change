@@ -2,6 +2,7 @@ import { getSessionUser } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { getCurrenciesWithDetails } from '@/services/currency.service'
 import { getRateHistory } from '@/services/exchange-rate.service'
+import { getSettings } from '@/services/settings.service'
 import CurrenciesClient from '@/components/currencies/CurrenciesClient'
 
 export const dynamic = 'force-dynamic'
@@ -10,9 +11,10 @@ export default async function CurrenciesPage() {
   const user = await getSessionUser()
   if (!user) redirect('/login')
 
-  const [currencies, rateHistory] = await Promise.all([
+  const [currencies, rateHistory, settings] = await Promise.all([
     getCurrenciesWithDetails(),
     getRateHistory(undefined, 30),
+    getSettings(),
   ])
 
   const mappedHistory = rateHistory.map((h: any) => ({
@@ -34,7 +36,7 @@ export default async function CurrenciesPage() {
 
   return (
     <div className="page">
-      <CurrenciesClient currencies={mappedCurrencies} isAdmin={user.role === 'ADMIN'} rateHistory={mappedHistory} />
+      <CurrenciesClient currencies={mappedCurrencies} isAdmin={user.role === 'ADMIN'} rateHistory={mappedHistory} settings={{ bureauName: settings.bureauName, address: settings.address, phone: settings.phone, footer: settings.footer, logoBase64: settings.logoBase64 ?? null }} />
     </div>
   )
 }
