@@ -167,19 +167,191 @@ export default function TransactionTable({
     }
   }
 
-  function exportCSV() {
-    const rows = [['Reçu','Date','Heure','Type','Devise','Montant','Taux','Commission','Total MGA','Caissier']]
-    transactions.forEach(tx => rows.push([
-      tx.receiptNo, formatDate(tx.createdAt), formatTime(tx.createdAt),
-      tx.type, tx.currency.code, String(tx.amount), String(tx.rate),
-      String(tx.commission), String(tx.totalMGA), tx.user?.name||''
-    ]))
-    const csv  = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n')
-    const blob = new Blob(['\uFEFF'+csv], { type: 'text/csv;charset=utf-8;' })
-    const url  = URL.createObjectURL(blob)
-    const a    = document.createElement('a')
-    a.href = url; a.download = `transactions_${new Date().toISOString().slice(0,10)}.csv`
-    a.click(); URL.revokeObjectURL(url)
+  async function exportExcel() {
+    const XLSX = await import('xlsx')
+
+    const rows = transactions
+      .filter(tx => !tx.deletedAt)
+      .map(tx => ({
+        'N° Reçu':     tx.receiptNo,
+        'Date':        formatDate(tx.createdAt),
+        'Heure':       formatTime(tx.createdAt),
+        'Type':        tx.type,
+        'Devise':      tx.currency.code,
+        'Montant':     tx.amount,
+        'Taux':        tx.rate,
+        'Commission':  tx.commission,
+        'Total MGA':   tx.totalMGA,
+        'Caissier':    tx.user?.name || '',
+      }))
+
+    const ws = XLSX.utils.json_to_sheet(rows)
+
+    // Largeurs colonnes
+    ws['!cols'] = [
+      { wch: 14 }, { wch: 12 }, { wch: 8 }, { wch: 8 },
+      { wch: 8 },  { wch: 12 }, { wch: 10 }, { wch: 12 },
+      { wch: 14 }, { wch: 16 },
+    ]
+
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Transactions')
+    XLSX.writeFile(wb, `transactions_${new Date().toISOString().slice(0, 10)}.xlsx`)
+  }
+
+  function printSummary() {
+    // Lire les filtres actifs depuis l'URL
+    const sp = new URLSearchParams(window.location.search)
+    const filterParts: string[] = []
+    if (sp.get('dateFrom')) filterParts.push(`Du : ${sp.get('dateFrom')}`)
+    if (sp.get('dateTo'))   filterParts.push(`Au : ${sp.get('dateTo')}`)
+    if (sp.get('type'))     filterParts.push(`Type : ${sp.get('type')}`)
+
+    const activeTx = transactions.filter(t => !t.deletedAt)
+    const tAchat   = activeTx.filter(t => t.type === 'ACHAT').reduce((s, t) => s + t.totalMGA, 0)
+    const tVente   = activeTx.filter(t => t.type === 'VENTE').reduce((s, t) => s + t.totalMGA, 0)
+
+    const logoHtml = bureauLogo && bureauLogo.startsWith('data:image/')
+      ? `<img src="${bureauLogo}" style="max-height:50px;max-width:120px;object-fit:contain"/>`
+      : ''
+
+    const filtersHtml = filterParts.length > 0
+      ? `<div class="filters">Filtres actifs : ${filterParts.join(' — ')}</div>`
+      : `<div class="filters">Toutes les transactions</div>`
+
+    const rows = activeTx.map(tx => `
+      <tr>
+        <td>${tx.receiptNo}</td>
+        <td>${formatDate(tx.createdAt)}</td>
+        <td>${formatTime(tx.createdAt)}</td>
+        <td><span class="chip ${tx.type === 'ACHAT' ? 'chip-green' : 'chip-red'}">${tx.type}</span></td>
+        <td>${tx.currency.code}</td>
+        <td class="num">${formatCurrency(tx.amount, tx.currency.code)}</td>
+        <td class="num">${formatNumber(tx.rate)}</td>
+        <td class="num">${tx.commission > 0 ? formatMGA(tx.commission) : '—'}</td>
+        <td class="num fw">${formatMGA(tx.totalMGA)}</td>
+        <td>${tx.user?.name || '—'}</td>
+      </tr>
+    `).join('')
+
+    const html = `<!DOCTYPE html>
+  <html lang="fr">
+  <head>
+  <meta charset="UTF-8">
+  <title>État des transactions — ${new Date().toLocaleDateString('fr-FR')}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0 }
+    body { font-family: Arial, sans-serif; font-size: 10pt; color: #1a1a1a; padding: 15mm 15mm; }
+
+    .header { display: flex; justify-content: space-between; align-items: flex-start;
+              border-bottom: 2px solid #1a3a6b; padding-bottom: 10px; margin-bottom: 12px; }
+    .bureau-name { font-size: 16pt; font-weight: 700; color: #1a3a6b; }
+    .bureau-detail { font-size: 9pt; color: #555; margin-top: 3px; }
+    .doc-title { text-align: center; font-size: 13pt; font-weight: 700;
+                text-transform: uppercase; letter-spacing: 1px; color: #1a3a6b;
+                margin-bottom: 8px; }
+    .filters { text-align: center; font-size: 9pt; color: #555;
+              background: #f0f4ff; border: 1px solid #c7d7f5;
+              padding: 5px 10px; border-radius: 4px; margin-bottom: 12px; }
+    .stats { display: flex; gap: 12px; margin-bottom: 12px; }
+    .stat { flex: 1; border: 1px solid #e2e8f0; border-radius: 4px;
+            padding: 8px 12px; text-align: center; }
+    .stat-label { font-size: 8pt; color: #666; text-transform: uppercase; }
+    .stat-value { font-size: 11pt; font-weight: 700; color: #1a3a6b; margin-top: 2px; }
+    table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+    thead tr { background: #1a3a6b; color: white; }
+    th { padding: 6px 8px; text-align: left; font-weight: 600; }
+    td { padding: 5px 8px; border-bottom: 1px solid #e2e8f0; }
+    tr:nth-child(even) td { background: #f8fafc; }
+    .num { text-align: right; }
+    .fw  { font-weight: 700; }
+    .chip { padding: 1px 6px; border-radius: 10px; font-size: 8pt; font-weight: 600; }
+    .chip-green { background: #dcfce7; color: #166534; }
+    .chip-red   { background: #fee2e2; color: #991b1b; }
+    .totals { margin-top: 12px; border-top: 2px solid #1a3a6b; padding-top: 10px;
+              display: flex; gap: 16px; justify-content: flex-end; }
+    .total-item { text-align: right; }
+    .total-label { font-size: 9pt; color: #555; }
+    .total-value { font-size: 11pt; font-weight: 700; color: #1a3a6b; }
+    .footer { margin-top: 16px; text-align: center; font-size: 8pt; color: #aaa;
+              border-top: 1px solid #e2e8f0; padding-top: 8px; }
+    @media print { body { padding: 10mm; } }
+  </style>
+  </head>
+  <body>
+
+  <div class="header">
+    <div>
+      ${logoHtml}
+      <div class="bureau-name">${bureauName}</div>
+      <div class="bureau-detail">${bureauAddress}</div>
+      <div class="bureau-detail">Tél : ${bureauPhone}</div>
+    </div>
+    <div style="text-align:right; font-size:9pt; color:#555">
+      Édité le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})}
+    </div>
+  </div>
+
+  <div class="doc-title">État récapitulatif des transactions</div>
+  ${filtersHtml}
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">Transactions</div>
+      <div class="stat-value">${activeTx.length}</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Total achats</div>
+      <div class="stat-value">${formatMGA(tAchat)}</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Total ventes</div>
+      <div class="stat-value">${formatMGA(tVente)}</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Volume total</div>
+      <div class="stat-value">${formatMGA(tAchat + tVente)}</div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>N° Reçu</th><th>Date</th><th>Heure</th><th>Type</th>
+        <th>Devise</th><th>Montant</th><th>Taux</th><th>Commission</th>
+        <th>Total MGA</th><th>Caissier</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+
+  <div class="totals">
+    <div class="total-item">
+      <div class="total-label">Total achats</div>
+      <div class="total-value">${formatMGA(tAchat)}</div>
+    </div>
+    <div class="total-item">
+      <div class="total-label">Total ventes</div>
+      <div class="total-value">${formatMGA(tVente)}</div>
+    </div>
+    <div class="total-item">
+      <div class="total-label">Volume total</div>
+      <div class="total-value">${formatMGA(tAchat + tVente)}</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    ${bureauFooter} — Document généré automatiquement par Travel EXChange
+  </div>
+
+  <script>window.onload = () => { window.print() }<\/script>
+  </body>
+  </html>`
+
+    const win = window.open('', '_blank', 'width=1000,height=800')
+    if (!win) { alert('Veuillez autoriser les popups pour imprimer.'); return }
+    win.document.write(html)
+    win.document.close()
   }
 
   // Exclure les soft-deleted de l'affichage et des totaux
@@ -206,7 +378,10 @@ export default function TransactionTable({
       <div className="card">
         <div className="card-header">
           <h2 className="card-title">📋 Liste ({total})</h2>
-          <button className="btn btn-sm btn-outline" onClick={exportCSV}>⬇ CSV</button>
+          <div style={{display:'flex', gap:6, marginLeft:'auto'}}>
+            <button className="btn btn-sm btn-outline" onClick={exportExcel}>⬇ Excel</button>
+            <button className="btn btn-sm btn-outline" onClick={printSummary}>🖨️ État</button>
+          </div>
         </div>
 
         {transactions.length === 0

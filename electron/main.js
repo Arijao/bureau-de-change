@@ -292,6 +292,21 @@ function createWindow() {
   })
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    // Laisser Electron ouvrir les popups d'impression (about:blank ou localhost)
+    if (!url || url === 'about:blank' || url.startsWith('http://127.0.0.1')) {
+      return {
+        action: 'allow',
+        overrideBrowserWindowOptions: {
+          width: 900,
+          height: 1100,
+          webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+          },
+        },
+      }
+    }
+    // Liens externes réels → navigateur système
     shell.openExternal(url)
     return { action: 'deny' }
   })
