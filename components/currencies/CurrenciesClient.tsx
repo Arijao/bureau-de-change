@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { formatNumber, formatMGA } from '@/lib/utils'
 import { addRateAction, toggleCurrencyAction, deleteCurrencyAction, createCurrencyAction, updateCurrencyAction, adjustStockAction, updateDenominationCategoriesAction, getPhysicalDenominationsAction } from '@/actions/currency.actions'
 import { getFlagClass, hasFlagIcon } from '@/lib/currency-flags'
+import CurrencyFlag from '@/components/ui/CurrencyFlag'
 
 interface CategoryRate { categoryId: number; buyRate: number }
 interface Rate { id: number; buyRate: number; sellRate: number; createdAt: Date; note?: string | null; user?: { name: string } | null; categoryRates?: CategoryRate[] }
@@ -161,7 +162,7 @@ export default function CurrenciesClient({ currencies: init, isAdmin, rateHistor
       {currencies.some(c => c.stock?.isLow) && (
         <div className="alert-banner">
           ⚠️ <strong>Alerte stock faible :</strong>{' '}
-          {currencies.filter(c => c.stock?.isLow).map(c => `${c.flag} ${c.code} (${formatNumber(c.stock!.amount, 2)})`).join(' · ')}
+          {currencies.filter(c => c.stock?.isLow).map(c => `${c.code} (${formatNumber(c.stock!.amount, 2)})`).join(' · ')}
         </div>
       )}
 
@@ -172,9 +173,7 @@ export default function CurrenciesClient({ currencies: init, isAdmin, rateHistor
             <div key={c.id} className={`currency-card ${!c.isActive ? 'currency-inactive' : ''}`}>
               <div className="currency-card-header">
                 <span className="currency-flag">
-                  {hasFlagIcon(c.code)
-                    ? <span className={getFlagClass(c.code)} style={{ fontSize: 24 }} />
-                    : c.flag}
+                  <CurrencyFlag code={c.code} flag={c.flag} size={24} />
                 </span>
                 <div className="currency-info">
                   <div className="currency-code">{c.code} <span className="currency-symbol">{c.symbol}</span></div>
@@ -294,7 +293,7 @@ export default function CurrenciesClient({ currencies: init, isAdmin, rateHistor
               <tbody>{rateHistory.slice(0, 15).map(h => (
                 <tr key={h.id}>
                   <td className="fs-12 text-muted">{new Date(h.createdAt).toLocaleDateString('fr-FR')} {new Date(h.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</td>
-                  <td><strong>{h.currency.flag} {h.currency.code}</strong></td>
+                  <td><strong><CurrencyFlag code={h.currency.code} flag={h.currency.flag} size={16} /> {h.currency.code}</strong></td>
                   <td className="text-green fw-600">{formatNumber(h.buyRate)} Ar</td>
                   <td className="text-red fw-600">{formatNumber(h.sellRate)} Ar</td>
                   <td className="text-amber">{formatNumber(h.sellRate - h.buyRate)} Ar</td>
@@ -310,7 +309,7 @@ export default function CurrenciesClient({ currencies: init, isAdmin, rateHistor
       {modal === 'rate' && selected && (
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setModal(null)}>
           <div className="modal">
-            <div className="modal-header"><h3 className="modal-title">{selected.flag} Modifier les taux — {selected.code}</h3><button className="modal-close" onClick={() => setModal(null)}>×</button></div>
+            <div className="modal-header"><h3 className="modal-title"><CurrencyFlag code={selected.code} flag={selected.flag} size={16} /> Modifier les taux — {selected.code}</h3><button className="modal-close" onClick={() => setModal(null)}>×</button></div>
             <div className="alert alert-info" style={{ marginBottom: 16 }}>Le nouveau taux devient immédiatement actif pour toutes les transactions.</div>
             <div className="form-row">
               <div className="form-group"><label className="form-label">Taux {selected.denominationCategories?.length ? 'Global ' : ''}d'achat (Ar/{selected.code})</label><input className="form-control" type="number" step="1" value={rBuy} onChange={e => setRBuy(e.target.value)} /></div>
@@ -337,7 +336,7 @@ export default function CurrenciesClient({ currencies: init, isAdmin, rateHistor
       {modal === 'stock' && selected && (
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setModal(null)}>
           <div className="modal">
-            <div className="modal-header"><h3 className="modal-title">📦 Gestion stock — {selected.flag} {selected.code}</h3><button className="modal-close" onClick={() => setModal(null)}>×</button></div>
+            <div className="modal-header"><h3 className="modal-title">📦 Gestion stock — <CurrencyFlag code={selected.code} flag={selected.flag} size={16} /> {selected.code}</h3><button className="modal-close" onClick={() => setModal(null)}>×</button></div>
             <div className="info-box" style={{ marginBottom: 16 }}>
               <div className="ib-row"><span className="ib-label">Stock actuel</span><span className={`ib-value ${selected.stock?.isLow ? 'text-red' : ''}`}>{selected.stock ? formatNumber(selected.stock.amount, 2) + ' ' + selected.code : '—'}</span></div>
               <div className="ib-row"><span className="ib-label">Seuil alerte</span><span className="ib-value">{selected.stock ? formatNumber(selected.stock.alertLevel, 2) + ' ' + selected.code : '—'}</span></div>
@@ -399,7 +398,7 @@ export default function CurrenciesClient({ currencies: init, isAdmin, rateHistor
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setModal(null)}>
           <div className="modal" style={{ maxWidth: 400 }}>
             <div className="modal-header"><h3 className="modal-title">🗑️ Supprimer {selected.code}</h3><button className="modal-close" onClick={() => setModal(null)}>×</button></div>
-            <div className="alert alert-error">Supprimer <strong>{selected.flag} {selected.code} — {selected.name}</strong> ? Cette action est irréversible. Impossible si des transactions existent.</div>
+            <div className="alert alert-error">Supprimer <strong><CurrencyFlag code={selected.code} flag={selected.flag} size={14} /> {selected.code} — {selected.name}</strong> ? Cette action est irréversible. Impossible si des transactions existent.</div>
             <div className="btn-group mt-16"><button className="btn btn-danger" onClick={() => doDelete(selected)}>Supprimer définitivement</button><button className="btn btn-outline" onClick={() => setModal(null)}>Annuler</button></div>
           </div>
         </div>
@@ -407,7 +406,7 @@ export default function CurrenciesClient({ currencies: init, isAdmin, rateHistor
       {modal === 'edit' && selected && (
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setModal(null)}>
           <div className="modal" style={{ maxWidth: 440 }}>
-            <div className="modal-header"><h3 className="modal-title">✏️ Modifier — {selected.flag} {selected.code}</h3><button className="modal-close" onClick={() => setModal(null)}>×</button></div>
+            <div className="modal-header"><h3 className="modal-title">✏️ Modifier — <CurrencyFlag code={selected.code} flag={selected.flag} size={16} /> {selected.code}</h3><button className="modal-close" onClick={() => setModal(null)}>×</button></div>
             <div className="info-box" style={{ marginBottom: 16 }}>
               <div className="ib-row"><span className="ib-label">Code ISO</span><span className="ib-value fw-600">{selected.code}</span></div>
             </div>
@@ -457,7 +456,7 @@ export default function CurrenciesClient({ currencies: init, isAdmin, rateHistor
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowDenoms(false)}>
           <div className="modal">
             <div className="modal-header">
-              <h3 className="modal-title">📦 Inventaire physique — {selected.flag} {selected.code}</h3>
+              <h3 className="modal-title">📦 Inventaire physique — <CurrencyFlag code={selected.code} flag={selected.flag} size={16} /> {selected.code}</h3>
               <button className="modal-close" onClick={() => setShowDenoms(false)}>×</button>
             </div>
 

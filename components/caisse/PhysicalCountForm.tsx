@@ -11,6 +11,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter }               from 'next/navigation'
 import { closeSessionAction }      from '@/actions/cash-session.actions'
+import CurrencyFlag from '@/components/ui/CurrencyFlag'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -242,7 +243,7 @@ export default function PhysicalCountForm({ session, currencies, onCancel }: Pro
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontSize: 22 }}>{c.currencyFlag}</span>
+                  <CurrencyFlag code={c.currencyCode} flag={c.currencyFlag} size={22} />
                   <span style={{ fontWeight: 700, fontSize: 15, color: '#111827' }}>{c.currencyCode}</span>
                   {c.openingBalance > 0 && (
                     <span style={{ fontSize: 11, color: '#9ca3af' }}>

@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { formatMGA, formatCurrency, formatNumber, formatDate, formatTime } from '@/lib/utils'
 import { mgaToWords } from '@/lib/number-to-words'
 import { saveAttestationAction } from '@/actions/transaction.actions'
+import CurrencyFlag from '@/components/ui/CurrencyFlag'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -408,7 +409,7 @@ ${(destination || travelNature || transportTitle || ticketNo || departureDate ||
     <tbody>
       <tr>
         <td>Vente de devises</td>
-        <td>${tx.currency.flag} ${formatCurrency(tx.amount, tx.currency.code)} (${tx.currency.name})</td>
+        <td>${formatCurrency(tx.amount, tx.currency.code)} (${tx.currency.name})</td>
         <td>${tx.rate > 0 ? `${formatNumber(tx.rate)} Ar/${tx.currency.code}` : '—'}</td>
         <td>${tx.rate > 0 ? formatMGA(tx.amount * tx.rate) : formatMGA(total)}</td>
       </tr>
@@ -568,7 +569,7 @@ ${(destination || travelNature || transportTitle || ticketNo || departureDate ||
               </div>
               <div className="ib-row">
                 <span className="ib-label">Montant</span>
-                <span className="ib-value">{tx.currency.flag} {formatCurrency(tx.amount, tx.currency.code)}</span>
+                <span className="ib-value"><CurrencyFlag code={tx.currency.code} flag={tx.currency.flag} size={14} /> {formatCurrency(tx.amount, tx.currency.code)}</span>
               </div>
               <div className="ib-row">
                 <span className="ib-label">Taux</span>
@@ -745,7 +746,7 @@ ${(destination || travelNature || transportTitle || ticketNo || departureDate ||
 
               <div style={{background:'#eef2fb', border:'1px solid #1a3a6b', borderRadius:4, padding:'10px 14px', marginBottom:10}}>
                 <div style={{display:'flex', justifyContent:'space-between', fontWeight:700}}>
-                  <span>{tx.currency.flag} {formatCurrency(tx.amount, tx.currency.code)} @ {formatNumber(tx.rate)} Ar/{tx.currency.code}</span>
+                  <span><CurrencyFlag code={tx.currency.code} flag={tx.currency.flag} size={14} /> {formatCurrency(tx.amount, tx.currency.code)} @ {formatNumber(tx.rate)} Ar/{tx.currency.code}</span>
                   <span style={{color:'#1a3a6b', fontSize:14}}>{formatMGA(total)}</span>
                 </div>
                 <div style={{fontSize:11, fontStyle:'italic', marginTop:6, color:'#444'}}>

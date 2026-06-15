@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { formatNumber, formatMGA, formatDate, formatTime } from '@/lib/utils'
 import { adjustStockAction, getCashClosingReportAction } from '@/actions/currency.actions'
+import CurrencyFlag from '@/components/ui/CurrencyFlag'
 
 interface StockRow { id: number; amount: number; alertLevel: number; isLow: boolean; percentage: number; currency: { id: number; code: string; name: string; flag: string } }
 interface LogRow { id: number; operation: string; delta: number; balanceBefore: number; balanceAfter: number; note: string|null; createdAt: Date; stock: { currency: { code: string; flag: string } }; user: { name: string }|null; transactionId: string|null }
@@ -96,7 +97,7 @@ export default function StockClient({ stocks, logs, isAdmin }: Props) {
           <tbody>
             {localStocks.map(s=>(
               <tr key={s.id}>
-                <td><strong>{s.currency.flag} {s.currency.code}</strong> <span className="text-muted fs-12">{s.currency.name}</span></td>
+                <td><strong><CurrencyFlag code={s.currency.code} flag={s.currency.flag} size={16} /> {s.currency.code}</strong> <span className="text-muted fs-12">{s.currency.name}</span></td>
                 <td className={`fw-600 ${s.isLow?'text-red':''}`}>{formatNumber(s.amount,2)} {s.currency.code}</td>
                 <td className="text-muted fs-12">{formatNumber(s.alertLevel,2)} {s.currency.code}</td>
                 <td style={{minWidth:120}}>
@@ -124,7 +125,7 @@ export default function StockClient({ stocks, logs, isAdmin }: Props) {
                   <tr key={l.id}>
                     <td className="fs-12">{formatDate(l.createdAt)}</td>
                     <td className="fs-12 text-muted">{formatTime(l.createdAt)}</td>
-                    <td><strong>{l.stock.currency.flag} {l.stock.currency.code}</strong></td>
+                    <td><strong><CurrencyFlag code={l.stock.currency.code} flag={l.stock.currency.flag} size={16} /> {l.stock.currency.code}</strong></td>
                     <td><span className={`chip ${opColor(l.operation)}`} style={{fontSize:10}}>{l.operation}</span></td>
                     <td className={`fw-600 ${l.delta>=0?'text-green':'text-red'}`}>{l.delta>=0?'+':''}{formatNumber(l.delta,2)}</td>
                     <td className="fs-12 text-muted">{formatNumber(l.balanceBefore,2)}</td>
@@ -142,7 +143,7 @@ export default function StockClient({ stocks, logs, isAdmin }: Props) {
       {selected && (
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setSelected(null)}>
           <div className="modal">
-            <div className="modal-header"><h3 className="modal-title">📦 Ajuster stock — {selected.currency.flag} {selected.currency.code}</h3><button className="modal-close" onClick={()=>setSelected(null)}>×</button></div>
+            <div className="modal-header"><h3 className="modal-title">📦 Ajuster stock — <CurrencyFlag code={selected.currency.code} flag={selected.currency.flag} size={16} /> {selected.currency.code}</h3><button className="modal-close" onClick={()=>setSelected(null)}>×</button></div>
             <div className="info-box" style={{marginBottom:16}}>
               <div className="ib-row"><span className="ib-label">Stock actuel</span><span className={`ib-value ${selected.isLow?'text-red':''}`}>{formatNumber(selected.amount,2)} {selected.currency.code}</span></div>
               <div className="ib-row"><span className="ib-label">Seuil alerte</span><span className="ib-value">{formatNumber(selected.alertLevel,2)} {selected.currency.code}</span></div>
@@ -196,7 +197,7 @@ export default function StockClient({ stocks, logs, isAdmin }: Props) {
                 <select className="form-control" value={reportCurrencyId} onChange={e => setReportCurrencyId(parseInt(e.target.value))}>
                   {stocks.map(s => (
                     <option key={s.currency.id} value={s.currency.id}>
-                      {s.currency.flag} {s.currency.code} — {s.currency.name}
+                      <CurrencyFlag code={s.currency.code} flag={s.currency.flag} size={14} /> {s.currency.code} — {s.currency.name}
                     </option>
                   ))}
                 </select>

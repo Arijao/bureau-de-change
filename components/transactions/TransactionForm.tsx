@@ -4,6 +4,8 @@ import { createTransactionAction } from '@/actions/transaction.actions'
 import { formatMGA, formatCurrency, formatNumber } from '@/lib/utils'
 import TicketModal from '@/components/ticket/TicketModal'
 import AttestationModal from '@/components/ticket/AttestationModal'
+import CurrencyFlag from '@/components/ui/CurrencyFlag'
+import { getFlagClass } from '@/lib/currency-flags'
 
 interface CategoryRate { categoryId: number; buyRate: number }
 interface Rate { buyRate: number; sellRate: number; categoryRates?: CategoryRate[] }
@@ -154,7 +156,7 @@ export default function TransactionForm({ currencies, userName, bureauName, bure
             <select className="form-control" value={currencyId} onChange={e => setCurrencyId(parseInt(e.target.value) || '')}>
               <option value="">— Choisir —</option>
               {currencies.map(c => (
-                <option key={c.id} value={c.id}>{c.flag} {c.code} — {c.name} {c.stock?.isLow ? '⚠️' : ''}</option>
+                <option key={c.id} value={c.id}>{c.code} — {c.name} {c.stock?.isLow ? '⚠️' : ''}</option>
               ))}
             </select>
           </div>
@@ -246,7 +248,7 @@ export default function TransactionForm({ currencies, userName, bureauName, bure
       <div className="tx-side">
         {selectedCurrency && (
           <div className="card">
-            <div className="section-title">📊 {selectedCurrency.flag} {selectedCurrency.code} — {selectedCurrency.name}</div>
+            <div className="section-title">📊 <CurrencyFlag code={selectedCurrency.code} flag={selectedCurrency.flag} size={16} /> {selectedCurrency.code} — {selectedCurrency.name}</div>
             <div className="info-box">
               <div className="ib-row"><span className="ib-label">Taux achat (bureau achète)</span><span className="ib-value text-green">{activeRate ? formatNumber(activeRate.buyRate) + ' Ar' : '—'}</span></div>
               <div className="ib-row"><span className="ib-label">Taux vente (bureau vend)</span><span className="ib-value text-red">{activeRate ? formatNumber(activeRate.sellRate) + ' Ar' : '—'}</span></div>
@@ -284,7 +286,7 @@ export default function TransactionForm({ currencies, userName, bureauName, bure
           <div className="section-title">🧮 Récapitulatif</div>
           {mgaAmount !== null && selectedCurrency && effectiveRate ? (
             <div className="info-box">
-              <div className="ib-row"><span className="ib-label">Devise</span><span className="ib-value">{selectedCurrency.flag} {formatCurrency(effectiveAmount, selectedCurrency.code)}</span></div>
+              <div className="ib-row"><span className="ib-label">Devise</span><span className="ib-value"><CurrencyFlag code={selectedCurrency.code} flag={selectedCurrency.flag} size={14} /> {formatCurrency(effectiveAmount, selectedCurrency.code)}</span></div>
               <div className="ib-row"><span className="ib-label">Taux ({type === 'ACHAT' ? (hasCategories ? 'moyen pondéré' : 'achat') : 'vente'})</span><span className="ib-value">{formatNumber(effectiveRate)} Ar/{selectedCurrency.code}</span></div>
               <div className="ib-row"><span className="ib-label">Montant brut</span><span className="ib-value">{formatMGA(baseMGA)}</span></div>
               {parseFloat(commission) > 0 && <div className="ib-row"><span className="ib-label">Commission</span><span className="ib-value">{type === 'ACHAT' ? '- ' : '+ '}{formatMGA(parseFloat(commission))}</span></div>}

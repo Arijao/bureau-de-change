@@ -13,6 +13,7 @@
 import { useState, useEffect, useTransition } from 'react'
 import { useRouter }               from 'next/navigation'
 import { openSessionAction, getPreviousBalancesAction } from '@/actions/cash-session.actions'
+import CurrencyFlag from '@/components/ui/CurrencyFlag'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -295,7 +296,7 @@ export default function OpenSessionForm({ user, lastClosed, currencies }: Props)
                 display: 'flex', alignItems: 'center', gap: 12,
                 padding: '12px 16px',
               }}>
-                <span style={{ fontSize: 20, minWidth: 28 }}>{b.currencyFlag}</span>
+                <span style={{ minWidth: 28 }}><CurrencyFlag code={b.currencyCode} flag={b.currencyFlag} size={20} /></span>
                 <span style={{ fontWeight: 600, color: '#374151', minWidth: 48 }}>{b.currencyCode}</span>
 
                 {b.hasDenominations ? (

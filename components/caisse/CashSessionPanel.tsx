@@ -15,6 +15,7 @@ import { useRouter }     from 'next/navigation'
 import OpenSessionForm   from './OpenSessionForm'
 import PhysicalCountForm from './PhysicalCountForm'
 import Link              from 'next/link'
+import CurrencyFlag from '@/components/ui/CurrencyFlag'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -193,7 +194,7 @@ function CurrentSessionView({
               {openingBalances.map(b => (
                 <tr key={b.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
                   <td style={{ padding: '10px 16px' }}>
-                    <span style={{ fontSize: 18, marginRight: 8 }}>{b.currency.flag}</span>
+                    <span style={{ marginRight: 8 }}><CurrencyFlag code={b.currency.code} flag={b.currency.flag} size={18} /></span>
                     <span style={{ fontWeight: 600, color: '#374151' }}>{b.currency.code}</span>
                   </td>
                   <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 600, color: '#111827' }}>

@@ -4,6 +4,7 @@ import { formatMGA, formatCurrency, formatDate, formatTime, formatNumber } from 
 import TicketModal from '@/components/ticket/TicketModal'
 import AttestationModal from '@/components/ticket/AttestationModal'
 import { deleteTransactionAction, updateTransactionAction, deleteTransactionWithOverrideAction, updateTransactionWithOverrideAction } from '@/actions/transaction.actions'
+import CurrencyFlag from '@/components/ui/CurrencyFlag'
 
 interface TxRow {
   id: string; receiptNo: string; type: string; createdAt: Date
@@ -404,7 +405,7 @@ export default function TransactionTable({
                     <td>{formatDate(tx.createdAt)}</td>
                     <td>{formatTime(tx.createdAt)}</td>
                     <td><span className={`chip ${tx.type==='ACHAT'?'chip-green':'chip-red'}`}>{tx.type}</span></td>
-                    <td>{tx.currency.flag} {tx.currency.code}</td>
+                    <td><CurrencyFlag code={tx.currency.code} flag={tx.currency.flag} size={16} /> {tx.currency.code}</td>
                     <td className="fw-600">{formatCurrency(tx.amount, tx.currency.code)}</td>
                     <td>{formatNumber(tx.rate)}</td>
                     <td>{tx.commission > 0 ? formatMGA(tx.commission) : '—'}</td>
@@ -471,7 +472,7 @@ export default function TransactionTable({
             <div className="info-box">
               <div className="ib-row"><span className="ib-label">N° Reçu</span><span className="ib-value fw-600">{modal.tx.receiptNo}</span></div>
               <div className="ib-row"><span className="ib-label">Type</span><span className="ib-value">{modal.tx.type}</span></div>
-              <div className="ib-row"><span className="ib-label">Devise</span><span className="ib-value">{modal.tx.currency.flag} {modal.tx.currency.code}</span></div>
+              <div className="ib-row"><span className="ib-label">Devise</span><span className="ib-value"><CurrencyFlag code={modal.tx.currency.code} flag={modal.tx.currency.flag} size={14} /> {modal.tx.currency.code}</span></div>
               <div className="ib-row"><span className="ib-label">Montant</span><span className="ib-value">{formatCurrency(modal.tx.amount, modal.tx.currency.code)}</span></div>
               <div className="ib-row"><span className="ib-label">Total MGA</span><span className="ib-value fw-600">{formatMGA(modal.tx.totalMGA)}</span></div>
               <div className="ib-row"><span className="ib-label">Caissier</span><span className="ib-value">{modal.tx.user?.name||'—'}</span></div>
@@ -517,7 +518,7 @@ export default function TransactionTable({
             <div className="info-box" style={{marginBottom:16}}>
               <div className="ib-row">
                 <span className="ib-label">Devise</span>
-                <span className="ib-value">{modal.tx.currency.flag} {modal.tx.currency.code}</span>
+                <span className="ib-value"><CurrencyFlag code={modal.tx.currency.code} flag={modal.tx.currency.flag} size={14} /> {modal.tx.currency.code}</span>
               </div>
               <div className="ib-row">
                 <span className="ib-label">Type</span>
@@ -650,7 +651,7 @@ export default function TransactionTable({
               </div>
               <div className="ib-row">
                 <span className="ib-label">Devise</span>
-                <span className="ib-value">{printMenuTx.currency.flag} {printMenuTx.currency.code}</span>
+                <span className="ib-value"><CurrencyFlag code={printMenuTx.currency.code} flag={printMenuTx.currency.flag} size={14} /> {printMenuTx.currency.code}</span>
               </div>
             </div>
 

@@ -20,6 +20,7 @@
 
 import { useEffect } from 'react'
 import Link          from 'next/link'
+import CurrencyFlag from '@/components/ui/CurrencyFlag'
 
 // ── Types (miroirs des types du service) ──────────────────────────────────────
 
@@ -353,7 +354,7 @@ export default function CashSessionReport({ report, bureauName }: Props) {
         <Table
           headers={['Devise', 'Solde d\'ouverture', 'Source']}
           rows={report.openingBalances.map(b => [
-            <span key="c"><span style={{ fontSize: 16, marginRight: 6 }}>{b.currency.flag}</span><strong>{b.currency.code}</strong></span>,
+            <span key="c"><span style={{ marginRight: 6 }}><CurrencyFlag code={b.currency.code} flag={b.currency.flag} size={16} /></span><strong>{b.currency.code}</strong></span>,
             <span key="a" style={{ fontWeight: 600 }}>{fmt(b.amount)} {b.currency.code}</span>,
             <span key="s" style={{ fontSize: 11, color: '#6b7280' }}>
               {session.previousSessionId ? 'Passation' : 'Saisie manuelle'}
@@ -464,7 +465,7 @@ export default function CashSessionReport({ report, bureauName }: Props) {
                       background: isOk ? 'transparent' : '#fff9f9',
                     }}>
                       <td style={{ padding: '10px 12px' }}>
-                        <span style={{ fontSize: 16, marginRight: 6 }}>{d.currency.flag}</span>
+                        <span style={{ marginRight: 6 }}><CurrencyFlag code={d.currency.code} flag={d.currency.flag} size={16} /></span>
                         <strong>{d.currency.code}</strong>
                       </td>
                       <td style={{ padding: '10px 12px' }}>{fmt(opening?.amount ?? 0)} {d.currency.code}</td>
@@ -517,7 +518,7 @@ export default function CashSessionReport({ report, bureauName }: Props) {
                   borderBottom: '1px solid #e5e7eb',
                   display: 'flex', alignItems: 'center', gap: 8,
                 }}>
-                  <span style={{ fontSize: 18 }}>{pb.currency.flag}</span>
+                  <CurrencyFlag code={pb.currency.code} flag={pb.currency.flag} size={18} />
                   <strong style={{ fontSize: 13 }}>{pb.currency.code}</strong>
                 </div>
 

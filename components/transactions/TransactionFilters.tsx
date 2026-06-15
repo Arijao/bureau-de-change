@@ -35,7 +35,7 @@ export default function TransactionFilters({ currencies }: Props) {
         <div className="form-group mb-0"><label className="form-label">Devise</label>
           <select className="form-control" value={currency} onChange={e=>setCurrency(e.target.value)}>
             <option value="">Toutes devises</option>
-            {currencies.map(c=><option key={c.id} value={String(c.id)}>{c.flag} {c.code}</option>)}
+            {currencies.map(c=><option key={c.id} value={String(c.id)}>{c.code}</option>)}
           </select>
         </div>
         <div className="filter-actions"><button className="btn btn-primary" onClick={apply} disabled={isPending}>Filtrer</button><button className="btn btn-outline" onClick={reset}>Réinit.</button></div>
