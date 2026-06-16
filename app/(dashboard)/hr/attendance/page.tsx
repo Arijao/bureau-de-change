@@ -1,4 +1,5 @@
 import { Suspense } from 'react'
+import Link from 'next/link'
 import { getSessionUser } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { getEmployees } from '@/services/hr.service'
@@ -57,13 +58,16 @@ export default async function AttendancePage() {
     <div className="page">
       <div className="page-header">
         <div>
+          <Link href="/hr" className="btn btn-outline btn-sm" style={{ marginBottom: '8px' }}>
+            ← Retour RH
+          </Link>
           <h1 className="page-title">🕐 Pointage du jour</h1>
           <p className="page-subtitle">
-            {today.toLocaleDateString('fr-FR', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
+            {today.toLocaleDateString('fr-FR', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
             })}
           </p>
         </div>

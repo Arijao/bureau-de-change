@@ -913,15 +913,32 @@ export async function verifyHrAccounts(): Promise<{ ok: boolean; missing: string
  * Récupère les salaires payés et les cotisations CNaPS patronales pour une période
  */
 export async function getPaidSalariesAndCnaps(from: Date, to: Date) {
+  // CORRECTION : filtrage par mois de PAIE (month/year), pas par date de virement (paidAt)
+  // Règle métier : la paie de mai reste attribuée à mai même si versée début juin
+  const fromYear  = from.getFullYear()
+  const fromMonth = from.getMonth() + 1   // getMonth() est 0-based → 1-12
+  const toYear    = to.getFullYear()
+  const toMonth   = to.getMonth() + 1
+
   const salaries = await prisma.salary.findMany({
     where: {
-      paidAt: { 
-        gte: from, 
-        lte: to,
-        not: null 
-      },
+      paidAt: { not: null },   // uniquement les bulletins effectivement payés
+      AND: [
+        {
+          OR: [
+            { year: { gt: fromYear } },
+            { year: fromYear, month: { gte: fromMonth } },
+          ],
+        },
+        {
+          OR: [
+            { year: { lt: toYear } },
+            { year: toYear, month: { lte: toMonth } },
+          ],
+        },
+      ],
     },
-  })  
+  })
   const totalGrossSalary = salaries.reduce((sum, s) => sum + (s.baseSalary + (s.bonuses || 0)), 0)
   const totalCnapsEmployer = salaries.reduce((sum, s) => sum + (s.cnapsEmployer || 0), 0)
   

@@ -1,4 +1,5 @@
 import { Suspense } from 'react'
+import Link from 'next/link'          // ← AJOUT (manquait dans cette page)
 import { getSessionUser } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { getExpenses } from '@/services/charges.service'
@@ -16,7 +17,7 @@ export default async function ExpensesPage() {
     getExpenses(),
     prisma.ledgerAccount.findMany({
       where: {
-        type: 'EXPENSE',
+        type: 'EXPENSE',   // ← inchangé : correct, c'est le seed qui manque
         active: true,
       },
       orderBy: { code: 'asc' },
@@ -27,17 +28,21 @@ export default async function ExpensesPage() {
     <div className="page">
       <div className="page-header">
         <div>
+          {/* ← AJOUT bouton Retour */}
+          <Link
+            href="/charges"
+            className="btn btn-outline btn-sm"
+            style={{ marginBottom: '10px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+          >
+            ← Retour Charges
+          </Link>
           <h1 className="page-title">💸 Dépenses d'exploitation</h1>
-          <p className="page-subtitle">
-            Saisie et suivi des charges courantes
-          </p>
+          <p className="page-subtitle">Saisie et suivi des charges courantes</p>
         </div>
       </div>
 
-      {/* Formulaire de saisie */}
       <ExpenseForm accounts={accounts} />
 
-      {/* Tableau des dépenses */}
       <Suspense fallback={<div className="loading">Chargement...</div>}>
         <ExpenseTable expenses={expenses} />
       </Suspense>

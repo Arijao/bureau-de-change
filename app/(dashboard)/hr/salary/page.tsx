@@ -1,4 +1,5 @@
 import { Suspense } from 'react'
+import Link from 'next/link'
 import { getSessionUser } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { getEmployees, getSalaries } from '@/services/hr.service'
@@ -6,6 +7,7 @@ import { getSettings } from '@/services/settings.service'  // ⬅️ AJOUT
 import { formatMGA } from '@/lib/utils'
 import SalaryForm from '@/components/hr/SalaryForm'
 import SalaryTable from '@/components/hr/SalaryTable'
+
 
 export const dynamic = 'force-dynamic'
 
@@ -45,6 +47,9 @@ export default async function SalaryPage({
     <div className="page">
       <div className="page-header">
         <div>
+          <Link href="/hr" className="btn btn-outline btn-sm" style={{ marginBottom: '8px' }}>
+            ← Retour RH
+          </Link>
           <h1 className="page-title">💰 Gestion de la Paie</h1>
           <p className="page-subtitle">
             Bulletins de salaire et virements

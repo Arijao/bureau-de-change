@@ -1,6 +1,6 @@
 {
   "name": "bureau-de-change",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "private": true,
   "description": "Application de gestion de bureau de change",
   "author": {
@@ -50,6 +50,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.4.2",
     "electron": "^41.7.2",
     "electron-builder": "^26.15.3",
     "eslint": "^9",

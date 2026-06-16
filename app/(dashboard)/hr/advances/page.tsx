@@ -1,4 +1,5 @@
 import { Suspense } from 'react'
+import Link from 'next/link'
 import { getSessionUser } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { getEmployees } from '@/services/hr.service'
@@ -45,6 +46,9 @@ export default async function AdvancesPage() {
     <div className="page">
       <div className="page-header">
         <div>
+          <Link href="/hr" className="btn btn-outline btn-sm" style={{ marginBottom: '8px' }}>
+            ← Retour RH
+          </Link>
           <h1 className="page-title">💰 Gestion des Avances</h1>
           <p className="page-subtitle">Demandes, validations et déductions</p>
         </div>

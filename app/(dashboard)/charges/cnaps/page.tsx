@@ -1,4 +1,5 @@
 import { Suspense } from 'react'
+import Link from 'next/link'
 import { getSessionUser } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { getCnapsSettings, getChargesDashboardStats } from '@/services/charges.service'
@@ -21,6 +22,9 @@ export default async function CnapsPage() {
     <div className="page">
       <div className="page-header">
         <div>
+          <Link href="/charges" className="btn btn-outline btn-sm" style={{ marginBottom: '8px' }}>
+            ← Retour Charges
+          </Link>
           <h1 className="page-title">🏛️ Gestion CNaPS</h1>
           <p className="page-subtitle">
             Cotisations sociales et versements

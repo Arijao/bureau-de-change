@@ -24,6 +24,9 @@ export default async function EmployeesPage() {
     <div className="page">
       <div className="page-header">
         <div>
+          <Link href="/hr" className="btn btn-outline btn-sm" style={{ marginBottom: '8px' }}>
+            ← Retour RH
+          </Link>
           <h1 className="page-title">👤 Employés</h1>
           <p className="page-subtitle">
             {employees.length} employé(s) enregistré(s)
