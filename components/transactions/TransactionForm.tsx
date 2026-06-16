@@ -300,7 +300,7 @@ export default function TransactionForm({ currencies, userName, bureauName, bure
       </div>
 
       {showTicket && lastTx && (
-        <TicketModal transaction={lastTx} bureauName={bureauName} bureauAddress={bureauAddress} bureauPhone={bureauPhone} bureauFooter={bureauFooter} onClose={() => setShowTicket(false)} />
+        <TicketModal transaction={lastTx} bureauName={bureauName} bureauAddress={bureauAddress} bureauPhone={bureauPhone} bureauFooter={bureauFooter} logoBase64={logoBase64} onClose={() => setShowTicket(false)} />
       )}
 
       {showAttestation && lastTx && lastTx.type === 'VENTE' && (

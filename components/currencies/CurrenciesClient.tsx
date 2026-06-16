@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { formatNumber, formatMGA } from '@/lib/utils'
 import { addRateAction, toggleCurrencyAction, deleteCurrencyAction, createCurrencyAction, updateCurrencyAction, adjustStockAction, updateDenominationCategoriesAction, getPhysicalDenominationsAction } from '@/actions/currency.actions'
 import CurrencyFlag from '@/components/ui/CurrencyFlag'
+import { CURRENCY_TO_COUNTRY } from '@/lib/currency-flags'
 
 interface CategoryRate { categoryId: number; buyRate: number }
 interface Rate { id: number; buyRate: number; sellRate: number; createdAt: Date; note?: string | null; user?: { name: string } | null; categoryRates?: CategoryRate[] }
@@ -154,8 +155,15 @@ export default function CurrenciesClient({ currencies: init, isAdmin, rateHistor
         const buy = c.currentRate?.buyRate ?? 0
         const sell = c.currentRate?.sellRate ?? 0
         const spread = sell - buy
+        const countryCode = CURRENCY_TO_COUNTRY[c.code.toUpperCase()] ?? ''
         return `<tr>
-          <td><span style="font-size:18px;margin-right:8px;">${c.flag}</span><strong>${c.name}</strong></td>
+          <td>
+            ${countryCode
+              ? `<span class="fi fi-${countryCode}" style="font-size:18px;margin-right:8px;vertical-align:middle;"></span>`
+              : `<span style="font-size:11px;color:#6b7280;margin-right:6px;font-weight:600;">${c.code}</span>`
+            }
+            <strong>${c.name}</strong>
+          </td>
           <td style="font-weight:700;">${c.code}</td>
           <td style="font-size:16px;font-weight:700;color:#1a3a6b;">${c.symbol ?? '—'}</td>
           <td style="font-weight:600;color:#15803d;">${formatNumber(buy)} Ar</td>
@@ -167,6 +175,7 @@ export default function CurrenciesClient({ currencies: init, isAdmin, rateHistor
         : ''
       const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
   <title>Cours de change — ${now.toLocaleDateString('fr-FR')}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.5.0/css/flag-icons.min.css" onerror="this.dataset.failed='1'">
   <style>
   *{margin:0;padding:0;box-sizing:border-box;}
   body{font-family:'Segoe UI',Arial,sans-serif;color:#1a1a2e;padding:28px 32px;font-size:13px;}

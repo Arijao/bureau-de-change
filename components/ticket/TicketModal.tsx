@@ -36,17 +36,19 @@ interface Props {
   bureauAddress: string
   bureauPhone: string
   bureauFooter: string
+  logoBase64?: string | null
   onClose: () => void
 }
-
 export default function TicketModal({
   transaction: tx,
   bureauName,
   bureauAddress,
   bureauPhone,
   bureauFooter,
+  logoBase64,
   onClose
 }: Props) {
+
   const [size, setSize] = useState('80mm')
   const width = size === '58mm' ? 220 : 300
   const fs = size === '58mm' ? 10 : 12
@@ -91,7 +93,10 @@ export default function TicketModal({
         </style>
       </head>
       <body>
-        <div class="center bold" style="font-size: ${fs + 2}px;">${bureauName}</div>
+        <div class="center" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:4px;">
+          ${logoBase64 ? `<img src="${logoBase64}" style="height:36px;object-fit:contain;" />` : ''}
+          <span class="bold" style="font-size: ${fs + 2}px;">${bureauName}</span>
+        </div>
         <div class="center" style="font-size: ${fs - 1}px;">${bureauAddress}</div>
         <div class="center" style="font-size: ${fs - 1}px;">Tél: ${bureauPhone}</div>
         <div class="divider"></div>
@@ -208,7 +213,12 @@ export default function TicketModal({
             borderRadius: 4
           }}
         >
-          <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: size === '58mm' ? 12 : 14 }}>{bureauName}</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 4 }}>
+            {logoBase64 && (
+              <img src={logoBase64} style={{ height: 32, objectFit: 'contain' }} alt="Logo" />
+            )}
+            <div style={{ fontWeight: 'bold', fontSize: size === '58mm' ? 12 : 14 }}>{bureauName}</div>
+          </div>
           <div style={{ textAlign: 'center', fontSize: size === '58mm' ? 9 : 10 }}>{bureauAddress}</div>
           <div style={{ textAlign: 'center', fontSize: size === '58mm' ? 9 : 10, marginBottom: 8 }}>Tél: {bureauPhone}</div>
           <div style={{ borderTop: '1px dashed #000', margin: '8px 0' }}></div>

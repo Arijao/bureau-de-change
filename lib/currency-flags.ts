@@ -1,6 +1,6 @@
 // Mapping code devise ISO → code pays flag-icons
 // https://github.com/lipis/flag-icons
-const CURRENCY_TO_COUNTRY: Record<string, string> = {
+export const CURRENCY_TO_COUNTRY: Record<string, string> = {
   AED: 'ae',
   AUD: 'au',
   CAD: 'ca',

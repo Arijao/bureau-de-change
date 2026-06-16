@@ -607,6 +607,7 @@ export default function TransactionTable({
           transaction={{...ticketTx, createdAt: ticketTx.createdAt.toISOString(), mgaAmount: ticketTx.totalMGA}}
           bureauName={bureauName} bureauAddress={bureauAddress}
           bureauPhone={bureauPhone} bureauFooter={bureauFooter}
+          logoBase64={bureauLogo}
           onClose={() => setTicketTx(null)}
         />
       )}
