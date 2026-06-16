@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { generateSalaryAction } from '@/actions/hr.actions'
-import { calculateCnaps } from '@/services/charges.service'
+import { generateSalaryAction, calculateCnapsAction } from '@/actions/hr.actions'
 
 interface Employee {
   id: number
@@ -61,7 +60,7 @@ export default function SalaryForm({ employees }: Props) {
     if (selectedEmployee) {
       const grossSalary = selectedEmployee.baseSalary + parseFloat(formData.bonuses || '0')
       if (grossSalary > 0) {
-        calculateCnaps(grossSalary).then(setCnapsInfo)
+        calculateCnapsAction(grossSalary).then(setCnapsInfo)
       } else {
         setCnapsInfo(null)
       }

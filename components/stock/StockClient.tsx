@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { formatNumber, formatMGA, formatDate, formatTime } from '@/lib/utils'
-import { adjustStockAction, getCashClosingReportAction } from '@/actions/currency.actions'
+import { adjustStockAction, getCashClosingReportAction, updateAlertLevelAction } from '@/actions/currency.actions'
 import CurrencyFlag from '@/components/ui/CurrencyFlag'
 
 interface StockRow { id: number; amount: number; alertLevel: number; isLow: boolean; percentage: number; currency: { id: number; code: string; name: string; flag: string } }
@@ -24,6 +24,8 @@ export default function StockClient({ stocks, logs, isAdmin }: Props) {
   const [reportCurrencyId, setReportCurrencyId] = useState<number>(stocks[0]?.currency.id ?? 0)
   const [reportData, setReportData] = useState<any>(null)
   const [loadingReport, setLoadingReport] = useState(false)
+  
+  const [alertEdit, setAlertEdit] = useState('')
 
   async function generateReport() {
     if (!reportCurrencyId) return
@@ -147,6 +149,43 @@ export default function StockClient({ stocks, logs, isAdmin }: Props) {
             <div className="info-box" style={{marginBottom:16}}>
               <div className="ib-row"><span className="ib-label">Stock actuel</span><span className={`ib-value ${selected.isLow?'text-red':''}`}>{formatNumber(selected.amount,2)} {selected.currency.code}</span></div>
               <div className="ib-row"><span className="ib-label">Seuil alerte</span><span className="ib-value">{formatNumber(selected.alertLevel,2)} {selected.currency.code}</span></div>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Modifier le seuil d'alerte ({selected.currency.code})</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  className="form-control"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder={String(selected.alertLevel)}
+                  value={alertEdit}
+                  onChange={e => setAlertEdit(e.target.value)}
+                />
+                <button
+                  className="btn btn-outline btn-sm"
+                  disabled={!alertEdit || loading}
+                  onClick={async () => {
+                    setLoading(true)
+                    const res = await updateAlertLevelAction(selected.currency.id, parseFloat(alertEdit))
+                    setLoading(false)
+                    if (res.error) { setMsg({ text: res.error, type: 'error' }); return }
+                    setLocalStocks(prev => prev.map(s =>
+                      s.id !== selected.id ? s : {
+                        ...s,
+                        alertLevel: parseFloat(alertEdit),
+                        isLow: s.amount <= parseFloat(alertEdit),
+                      }
+                    ))
+                    setSelected(prev => prev ? { ...prev, alertLevel: parseFloat(alertEdit) } : null)
+                    setAlertEdit('')
+                    setMsg({ text: `Seuil ${selected.currency.code} mis à jour`, type: 'success' })
+                    setTimeout(() => setMsg(null), 3000)
+                  }}
+                >
+                  ✓ Appliquer
+                </button>
+              </div>
             </div>
             <div className="form-group">
               <div className="type-selector">

@@ -6,12 +6,15 @@ import { getExpenses } from '@/services/charges.service'
 import { prisma } from '@/lib/prisma'
 import ExpenseForm from '@/components/charges/ExpenseForm'
 import ExpenseTable from '@/components/charges/ExpenseTable'
+import { ensureDefaultLedgerAccounts } from '@/lib/ensure-defaults'
 
 export const dynamic = 'force-dynamic'
 
 export default async function ExpensesPage() {
   const user = await getSessionUser()
   if (!user || user.role !== 'ADMIN') redirect('/dashboard')
+
+  await ensureDefaultLedgerAccounts()
 
   const [expenses, accounts] = await Promise.all([
     getExpenses(),

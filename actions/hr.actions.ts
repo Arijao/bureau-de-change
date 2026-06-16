@@ -313,11 +313,15 @@ export async function markSalaryAsPaidAction(id: number) {
 
       console.log(`[markSalaryAsPaidAction] ✅ Terminé avec succès`)
     } catch (error) {
-      // [CORRECTION] Si une étape échoue, annuler le marquage comme payé
       console.error(`[markSalaryAsPaidAction] ❌ Erreur, annulation du marquage:`, error)
+      
       await prisma.salary.update({
         where: { id },
         data: { paidAt: null },
+      })
+      // Supprimer l'écriture comptable orpheline si elle existe
+      await prisma.journalEntry.deleteMany({
+        where: { reference: `SAL-${id}` }
       })
       throw error
     }
@@ -404,4 +408,9 @@ export async function getHrDashboardStatsAction() {
     console.error('[getHrDashboardStatsAction] Erreur:', e)
     return { error: e.message ?? 'Erreur de chargement' }
   }
+}
+
+export async function calculateCnapsAction(grossSalary: number) {
+  const { calculateCnaps } = await import('@/services/charges.service')
+  return calculateCnaps(grossSalary)
 }

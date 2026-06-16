@@ -52,6 +52,7 @@ interface Props {
 export default function SalaryTable({ salaries, employees, settings }: Props) {
   const router = useRouter()
   const [loadingId, setLoadingId] = useState<number | null>(null)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [viewingSalary, setViewingSalary] = useState<{ salary: Salary; employee: Employee } | null>(null)
 
   const getEmployee = (employeeId: number) => {
@@ -60,9 +61,14 @@ export default function SalaryTable({ salaries, employees, settings }: Props) {
 
   const handleMarkAsPaid = async (id: number) => {
     setLoadingId(id)
-    await markSalaryAsPaidAction(id)
+    setErrorMsg(null)
+    const res = await markSalaryAsPaidAction(id)
     setLoadingId(null)
-    router.refresh()
+    if (res?.error) {
+      setErrorMsg(res.error)
+    } else {
+      router.refresh()
+    }
   }
 
   const handleDelete = async (id: number) => {
@@ -111,6 +117,11 @@ export default function SalaryTable({ salaries, employees, settings }: Props) {
   return (
     <>
       <div className="card">
+        {errorMsg && (
+          <div className="alert alert-error" style={{ margin: '12px 16px 0' }}>
+            {errorMsg}
+          </div>
+        )}
         <div className="card-header">
           <span className="card-icon card-icon-blue">📋</span>
           <h2 className="card-title">Historique des bulletins</h2>

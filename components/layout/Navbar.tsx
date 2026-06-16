@@ -216,9 +216,10 @@ interface NavbarProps {
   user: { name: string; role: string }
   bureauName: string
   sessionBanner?: CashSessionBanner | null
+  logoBase64?: string | null
 }
-
-export default function Navbar({ user, bureauName, sessionBanner  }: NavbarProps) {
+export default function Navbar({ user, bureauName, sessionBanner, logoBase64 }: NavbarProps) {
+3 
   const pathname = usePathname()
   const router = useRouter()
   const isAdmin = user.role === 'ADMIN'
@@ -240,7 +241,15 @@ export default function Navbar({ user, bureauName, sessionBanner  }: NavbarProps
 
       {/* ── Marque ──────────────────────────────────────────────── */}
       <div className="navbar-brand">
-        <div className="navbar-logo">₵</div>
+        {logoBase64 ? (
+          <img
+            src={logoBase64}
+            alt="Logo"
+            style={{ height: 32, width: 32, objectFit: 'contain', borderRadius: 4 }}
+          />
+        ) : (
+          <div className="navbar-logo">₵</div>
+        )}
         <span className="navbar-title">{bureauName}</span>
       </div>
 

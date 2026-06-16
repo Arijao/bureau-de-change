@@ -598,12 +598,12 @@ export async function generateSalaryAccountingEntry(salaryId: number, prismaClie
 
     const existingEntry = await tx.journalEntry.findFirst({
       where: {
-        description: { contains: `Salaire ${salary.employee.firstName} ${salary.employee.lastName}` },
+        reference: `SAL-${salaryId}`,
       },
     })
 
     if (existingEntry) {
-      throw new Error('Une écriture comptable existe déjà pour ce bulletin')
+      return // idempotent — ne rien faire si déjà générée
     }
 
     // Auto-création des comptes RH si manquants

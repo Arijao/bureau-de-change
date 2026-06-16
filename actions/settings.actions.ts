@@ -231,3 +231,83 @@ export async function updateUserAction(
     return { error: e.message ?? 'Erreur modification utilisateur' }
   }
 }
+
+export async function resetAllDataAction(): Promise<{ success?: boolean; error?: string }> {
+  const user = await getSessionUser()
+  if (!user || user.role !== 'ADMIN') return { error: 'Accès refusé' }
+
+  try {
+    await prisma.$transaction([
+      // Sessions de caisse (du plus profond au plus haut)
+      prisma.cashSessionCountDetail.deleteMany(),
+      prisma.cashSessionBalance.deleteMany(),
+
+      // Logs de stock
+      prisma.stockLogDetail.deleteMany(),
+      prisma.stockLog.deleteMany(),
+
+      // Détails de transactions
+      prisma.transactionDetail.deleteMany(),
+      prisma.transactionEdit.deleteMany(),
+      prisma.receipt.deleteMany(),
+
+      // Comptabilité
+      prisma.journalEntryLine.deleteMany(),
+      prisma.journalEntry.deleteMany(),
+
+      // Attestations
+      prisma.attestation.deleteMany(),
+      prisma.attestationCounter.deleteMany(),
+
+      // Taux et transactions
+      prisma.exchangeCategoryRate.deleteMany(),
+      prisma.exchangeRate.deleteMany(),
+      prisma.transaction.deleteMany(),
+
+      // Sessions de caisse (table principale)
+      prisma.cashSession.deleteMany(),
+
+      // Charges
+      prisma.expense.deleteMany(),
+
+      // Logs et audit
+      prisma.operationLog.deleteMany(),
+      prisma.auditLog.deleteMany(),
+
+      // Sessions d'auth (sauf session courante)
+      prisma.session.deleteMany({ where: { userId: { not: user.id } } }),
+
+      // RH — données de paie uniquement (on garde les fiches employés)
+      prisma.attendance.deleteMany(),
+      prisma.salary.deleteMany(),
+      prisma.advance.deleteMany(),
+      prisma.sanction.deleteMany(),
+      prisma.leave.deleteMany(),
+      prisma.employee.deleteMany(),
+
+      // Remettre les stocks à zéro
+      prisma.cashStock.updateMany({ data: { amount: 0 } }),
+    ])
+
+    // Réinitialiser les séquences auto-increment SQLite
+    const tablesToReset = [
+      'Salary', 'JournalEntry', 'JournalEntryLine',
+      'StockLog', 'StockLogDetail', 'Expense',
+      'TransactionDetail', 'TransactionEdit',
+      'CashSessionBalance', 'CashSessionCountDetail',
+      'OperationLog', 'AuditLog',
+      'Attendance', 'Advance', 'Sanction', 'Leave',
+      'Employee', 'ExchangeRate', 'ExchangeCategoryRate',
+      'AttestationCounter',
+    ]
+    for (const table of tablesToReset) {
+      await prisma.$executeRawUnsafe(
+        `DELETE FROM sqlite_sequence WHERE name = ?`, table
+      )
+    }
+
+    return { success: true }
+  } catch (e: any) {
+    return { error: e.message ?? 'Erreur inconnue' }
+  }
+}

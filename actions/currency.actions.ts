@@ -4,6 +4,7 @@ import { getSessionUser } from '@/lib/auth'
 import { createCurrency, updateCurrency, toggleCurrency, deleteCurrency } from '@/services/currency.service'
 import { addRate } from '@/services/exchange-rate.service'
 import { adjustStock } from '@/services/stock.service'
+import { prisma } from '@/lib/prisma'
 
 export async function createCurrencyAction(data: {
   code: string; name: string; symbol?: string; flag?: string
@@ -125,5 +126,20 @@ export async function getCashClosingReportAction(currencyId: number, dateStr: st
     return { success: true, ...data }
   } catch (e: any) {
     return { error: e.message ?? 'Erreur lors de la génération du rapport' }
+  }
+}
+
+export async function updateAlertLevelAction(currencyId: number, alertLevel: number) {
+  const user = await getSessionUser()
+  if (!user) return { error: 'Non authentifié' }
+  try {
+    await prisma.cashStock.update({
+      where: { currencyId },
+      data: { alertLevel: Math.max(0, alertLevel) },
+    })
+    revalidatePath('/stock')
+    return { success: true }
+  } catch (e: any) {
+    return { error: e.message }
   }
 }

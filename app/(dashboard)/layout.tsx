@@ -21,7 +21,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <Navbar
         user={{ name: user.name, role: user.role }}
         bureauName={settings.bureauName}
-        sessionBanner={sessionBanner}                      // ← AJOUT prop
+        sessionBanner={sessionBanner}
+        logoBase64={settings.logoBase64 ?? null}
       />
       <main className="main-content">{children}</main>
 

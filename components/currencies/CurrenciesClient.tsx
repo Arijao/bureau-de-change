@@ -2,7 +2,6 @@
 import { useState } from 'react'
 import { formatNumber, formatMGA } from '@/lib/utils'
 import { addRateAction, toggleCurrencyAction, deleteCurrencyAction, createCurrencyAction, updateCurrencyAction, adjustStockAction, updateDenominationCategoriesAction, getPhysicalDenominationsAction } from '@/actions/currency.actions'
-import { getFlagClass, hasFlagIcon } from '@/lib/currency-flags'
 import CurrencyFlag from '@/components/ui/CurrencyFlag'
 
 interface CategoryRate { categoryId: number; buyRate: number }
@@ -155,9 +154,8 @@ export default function CurrenciesClient({ currencies: init, isAdmin, rateHistor
         const buy = c.currentRate?.buyRate ?? 0
         const sell = c.currentRate?.sellRate ?? 0
         const spread = sell - buy
-        const flagClass = hasFlagIcon(c.code) ? getFlagClass(c.code) : ''
-          return `<tr>
-            <td><span class="${flagClass}" style="font-size:18px;margin-right:8px;vertical-align:middle;"></span><strong>${c.name}</strong></td>
+        return `<tr>
+          <td><span style="font-size:18px;margin-right:8px;">${c.flag}</span><strong>${c.name}</strong></td>
           <td style="font-weight:700;">${c.code}</td>
           <td style="font-size:16px;font-weight:700;color:#1a3a6b;">${c.symbol ?? '—'}</td>
           <td style="font-weight:600;color:#15803d;">${formatNumber(buy)} Ar</td>
@@ -169,7 +167,6 @@ export default function CurrenciesClient({ currencies: init, isAdmin, rateHistor
         : ''
       const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
   <title>Cours de change — ${now.toLocaleDateString('fr-FR')}</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.5.0/css/flag-icons.min.css">
   <style>
   *{margin:0;padding:0;box-sizing:border-box;}
   body{font-family:'Segoe UI',Arial,sans-serif;color:#1a1a2e;padding:28px 32px;font-size:13px;}

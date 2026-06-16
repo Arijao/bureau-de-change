@@ -3,6 +3,7 @@ import { useState } from 'react'
 import {
   updateSettingsAction, createUserAction, changePasswordAction,
   toggleUserActiveAction, updateLogoAction, updateUserAction,
+  resetAllDataAction,
 } from '@/actions/settings.actions'
 
 interface UserRow { id: string; username: string; name: string; role: string; active: boolean; createdAt: Date }
@@ -52,6 +53,14 @@ export default function SettingsClient({ settings, users: initUsers, currentUser
   const [cName, setCName]         = useState('')
   const [cRole, setCRole]         = useState<'ADMIN'|'CAISSIER'>('CAISSIER')
   const [cPass, setCPass]         = useState('')
+
+  // ── Reset données ───────────────────────────────────────────────
+  const [showResetModal, setShowResetModal] = useState(false)
+  const [resetConfirmText, setResetConfirmText] = useState('')
+  const [resetChecked, setResetChecked] = useState(false)
+  const [resetLoading, setResetLoading] = useState(false)
+  const [resetMsg, setResetMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null)
+
   // Password form
   const [newPass, setNewPass]     = useState('')
   const [currentPass, setCurrentPass] = useState('')
@@ -181,6 +190,21 @@ export default function SettingsClient({ settings, users: initUsers, currentUser
   }
 
   const isSelfPassword = userModal?.mode === 'password' && userModal.user.id === currentUserId
+
+  async function doReset() {
+    if (resetConfirmText !== 'REMISE A ZERO' || !resetChecked) return
+    setResetLoading(true)
+    const res = await resetAllDataAction()
+    setResetLoading(false)
+    if (res.error) {
+      setResetMsg({ text: res.error, type: 'error' })
+    } else {
+      setShowResetModal(false)
+      setResetConfirmText('')
+      setResetChecked(false)
+      setResetMsg({ text: '✅ Remise à zéro effectuée. La base est prête pour la production.', type: 'success' })
+    }
+  }
 
   return (
     <div className="settings-grid">
@@ -537,6 +561,72 @@ export default function SettingsClient({ settings, users: initUsers, currentUser
                 {loading ? '…' : 'Enregistrer'}
               </button>
               <button className="btn btn-outline" onClick={() => setUserModal(null)}>Annuler</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Zone dangereuse ── */}
+      <div style={{ marginTop: 40, border: '2px solid #dc2626', borderRadius: 10, padding: '24px 28px' }}>
+        <h2 style={{ color: '#dc2626', fontWeight: 700, fontSize: 16, marginBottom: 8 }}>⚠️ Zone dangereuse</h2>
+        <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 16 }}>
+          Supprime toutes les données de test (transactions, taux, attestations, sessions de caisse, charges, logs RH)
+          et remet les stocks à zéro. Les utilisateurs, devises, paramètres, fiches employés et plan comptable sont conservés.
+        </p>
+        {resetMsg && (
+          <div className={`alert alert-${resetMsg.type === 'success' ? 'success' : 'error'}`} style={{ marginBottom: 12 }}>
+            {resetMsg.text}
+          </div>
+        )}
+        <button className="btn btn-sm" style={{ background: '#dc2626', color: 'white', border: 'none' }}
+          onClick={() => { setShowResetModal(true); setResetConfirmText(''); setResetChecked(false) }}>
+          🗑️ Remise à zéro des données de test
+        </button>
+      </div>
+
+      {/* ── Modal confirmation reset ── */}
+      {showResetModal && (
+        <div className="modal-overlay" onClick={() => setShowResetModal(false)}>
+          <div className="modal-content" style={{ maxWidth: 480 }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header" style={{ borderBottom: '2px solid #dc2626' }}>
+              <h3 className="modal-title" style={{ color: '#dc2626' }}>⚠️ Confirmer la remise à zéro</h3>
+              <button className="modal-close" onClick={() => setShowResetModal(false)}>×</button>
+            </div>
+            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '12px 14px', fontSize: 13, color: '#991b1b' }}>
+                <strong>Cette action est irréversible.</strong> Assurez-vous d'avoir effectué une sauvegarde de la base de données avant de continuer.
+              </div>
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 6 }}>
+                  Tapez <strong>REMISE A ZERO</strong> pour confirmer :
+                </label>
+                <input
+                  className="form-input"
+                  value={resetConfirmText}
+                  onChange={e => setResetConfirmText(e.target.value)}
+                  placeholder="REMISE A ZERO"
+                  style={{ fontFamily: 'monospace', letterSpacing: 1 }}
+                />
+              </div>
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 13, cursor: 'pointer' }}>
+                <input type="checkbox" checked={resetChecked} onChange={e => setResetChecked(e.target.checked)}
+                  style={{ marginTop: 2, accentColor: '#dc2626' }} />
+                <span>J'ai sauvegardé la base de données et je comprends que cette action supprimera définitivement toutes les données de test.</span>
+              </label>
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                <button className="btn btn-outline btn-sm" onClick={() => setShowResetModal(false)}>Annuler</button>
+                <button
+                  className="btn btn-sm"
+                  style={{
+                    background: resetConfirmText === 'REMISE A ZERO' && resetChecked ? '#dc2626' : '#9ca3af',
+                    color: 'white', border: 'none', cursor: resetConfirmText === 'REMISE A ZERO' && resetChecked ? 'pointer' : 'not-allowed'
+                  }}
+                  onClick={doReset}
+                  disabled={resetConfirmText !== 'REMISE A ZERO' || !resetChecked || resetLoading}
+                >
+                  {resetLoading ? 'Suppression...' : '🗑️ Confirmer la remise à zéro'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

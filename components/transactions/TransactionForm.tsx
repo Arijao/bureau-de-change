@@ -5,7 +5,6 @@ import { formatMGA, formatCurrency, formatNumber } from '@/lib/utils'
 import TicketModal from '@/components/ticket/TicketModal'
 import AttestationModal from '@/components/ticket/AttestationModal'
 import CurrencyFlag from '@/components/ui/CurrencyFlag'
-import { getFlagClass } from '@/lib/currency-flags'
 
 interface CategoryRate { categoryId: number; buyRate: number }
 interface Rate { buyRate: number; sellRate: number; categoryRates?: CategoryRate[] }

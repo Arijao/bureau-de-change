@@ -1,5 +1,5 @@
 'use client'
-
+import React from 'react'
 import { formatMGA, formatDate } from '@/lib/utils'
 
 interface JournalEntryLine {
@@ -68,7 +68,7 @@ export default function JournalTable({ entries, total }: Props) {
               const isFirstEntry = entryIndex === 0
 
               return (
-                <>
+                <React.Fragment key={entry.id}>
                   {/* Ligne principale de l'écriture */}
                   <tr style={{ backgroundColor: 'var(--bg2)', fontWeight: 500 }}>
                     <td rowSpan={entry.lines.length + 1}>
@@ -128,7 +128,7 @@ export default function JournalTable({ entries, total }: Props) {
                       <td colSpan={7} style={{ height: '1px', backgroundColor: 'var(--border)', padding: 0 }} />
                     </tr>
                   )}
-                </>
+                </React.Fragment>
               )
             })}
           </tbody>

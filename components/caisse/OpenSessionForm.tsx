@@ -10,7 +10,7 @@
  *  - Sans session précédente (premier démarrage) : saisie manuelle des soldes
  */
 
-import { useState, useEffect, useTransition } from 'react'
+import React, { useState, useEffect, useTransition } from 'react'
 import { useRouter }               from 'next/navigation'
 import { openSessionAction, getPreviousBalancesAction } from '@/actions/cash-session.actions'
 import CurrencyFlag from '@/components/ui/CurrencyFlag'
@@ -343,7 +343,7 @@ export default function OpenSessionForm({ user, lastClosed, currencies }: Props)
                 }}>
                   <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: '6px 12px', alignItems: 'center' }}>
                     {b.denominations.map((d, di) => (
-                      <>
+                      <React.Fragment key={di}>
                         <span key={`lbl-${di}`} style={{ fontSize: 12, color: '#6b7280', textAlign: 'right', minWidth: 60 }}>
                           {d.denomination.toLocaleString('fr-FR')} ×
                         </span>
@@ -363,7 +363,7 @@ export default function OpenSessionForm({ user, lastClosed, currencies }: Props)
                         <span key={`tot-${di}`} style={{ fontSize: 12, color: '#374151', minWidth: 90, textAlign: 'right' }}>
                           = {(d.denomination * d.quantity).toLocaleString('fr-FR', { minimumFractionDigits: 2 })}
                         </span>
-                      </>
+                      </React.Fragment>
                     ))}
                   </div>
                   <div style={{
