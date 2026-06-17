@@ -3,7 +3,7 @@ import { useState } from 'react'
 import {
   updateSettingsAction, createUserAction, changePasswordAction,
   toggleUserActiveAction, updateLogoAction, updateUserAction,
-  resetAllDataAction,
+  resetAllDataAction, changeOwnPasswordAction,
 } from '@/actions/settings.actions'
 
 interface UserRow { id: string; username: string; name: string; role: string; active: boolean; createdAt: Date }
@@ -17,11 +17,12 @@ interface Props {
   }
   users: UserRow[]
   currentUserId: string
+  currentUserRole: string
 }
 
 type UserModal = null | { mode: 'create' } | { mode: 'password'; user: UserRow } | { mode: 'edit'; user: UserRow }
 
-export default function SettingsClient({ settings, users: initUsers, currentUserId }: Props) {
+export default function SettingsClient({ settings, users: initUsers, currentUserId, currentUserRole }: Props) {
   const [bureauName, setBureauName] = useState(settings.bureauName)
   const [address, setAddress]       = useState(settings.address)
   const [phone, setPhone]           = useState(settings.phone)
@@ -67,6 +68,31 @@ export default function SettingsClient({ settings, users: initUsers, currentUser
   const [eName, setEName]         = useState('')
   const [eUsername, setEUsername] = useState('')
   const [modalError, setModalError]   = useState('')
+
+  // ── Changement mot de passe propre (CAISSIER) ──────────────────────────────
+  const [ownCurrentPass, setOwnCurrentPass] = useState('')
+  const [ownNewPass,     setOwnNewPass]     = useState('')
+  const [ownConfirmPass, setOwnConfirmPass] = useState('')
+  const [ownPassMsg,     setOwnPassMsg]     = useState<{ text: string; type: 'success' | 'error' } | null>(null)
+  const [ownPassLoading, setOwnPassLoading] = useState(false)
+
+  async function handleChangeOwnPassword() {
+    if (ownNewPass !== ownConfirmPass) {
+      setOwnPassMsg({ text: 'Les nouveaux mots de passe ne correspondent pas', type: 'error' })
+      return
+    }
+    setOwnPassLoading(true)
+    const res = await changeOwnPasswordAction(ownCurrentPass, ownNewPass)
+    setOwnPassLoading(false)
+    if (res.error) {
+      setOwnPassMsg({ text: res.error, type: 'error' })
+    } else {
+      setOwnPassMsg({ text: 'Mot de passe modifié avec succès. Vos autres sessions ont été fermées.', type: 'success' })
+      setOwnCurrentPass('')
+      setOwnNewPass('')
+      setOwnConfirmPass('')
+    }
+  }
 
   function toast(text: string, type: 'success'|'error' = 'success') {
     setUserMsg({ text, type }); setTimeout(() => setUserMsg(null), 4000)
@@ -633,4 +659,61 @@ export default function SettingsClient({ settings, users: initUsers, currentUser
       )}
     </div>
   )
+
+      {/* ── Section mot de passe propre (visible uniquement pour CAISSIER) ── */}
+      {currentUserRole === 'CAISSIER' && (
+        <div className="card" style={{ marginTop: 24 }}>
+          <div className="card-header">
+            <span className="card-icon card-icon-blue">🔑</span>
+            <h2 className="card-title">Modifier mon mot de passe</h2>
+          </div>
+          <div style={{ maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div className="form-group">
+              <label className="form-label">Mot de passe actuel</label>
+              <input
+                className="form-control"
+                type="password"
+                value={ownCurrentPass}
+                onChange={e => setOwnCurrentPass(e.target.value)}
+                placeholder="Mot de passe actuel"
+                autoComplete="current-password"
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Nouveau mot de passe</label>
+              <input
+                className="form-control"
+                type="password"
+                value={ownNewPass}
+                onChange={e => setOwnNewPass(e.target.value)}
+                placeholder="Minimum 6 caractères"
+                autoComplete="new-password"
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Confirmer le nouveau mot de passe</label>
+              <input
+                className="form-control"
+                type="password"
+                value={ownConfirmPass}
+                onChange={e => setOwnConfirmPass(e.target.value)}
+                placeholder="Répétez le nouveau mot de passe"
+                autoComplete="new-password"
+              />
+            </div>
+            {ownPassMsg !== null &&  (
+              <div className={`alert ${ownPassMsg!.type === 'success' ? 'alert-success' : 'alert-error'}`}>
+                {ownPassMsg!.text}
+              </div>
+            )}
+            <button
+              className="btn btn-primary"
+              onClick={handleChangeOwnPassword}
+              disabled={ownPassLoading || !ownCurrentPass || !ownNewPass || !ownConfirmPass}
+            >
+              {ownPassLoading ? 'Enregistrement...' : '🔒 Modifier mon mot de passe'}
+            </button>
+          </div>
+        </div>
+      )}
 }

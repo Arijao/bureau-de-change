@@ -349,6 +349,15 @@ export default function Navbar({ user, bureauName, sessionBanner, logoBase64 }: 
         <span className={`role-badge ${user.role === 'ADMIN' ? 'role-admin' : 'role-caissier'}`}>
           {user.role}
         </span>
+        {!isAdmin && (
+          <Link
+            href="/profile"
+            className={`navbar-link ${pathname === '/profile' ? 'active' : ''}`}
+            style={{ fontSize: '0.85rem' }}
+          >
+            🔑 Mon profil
+          </Link>
+        )}
         <button className="btn-logout" onClick={handleLogout}>Déconnexion</button>
       </div>
 

@@ -21,7 +21,12 @@ export default async function SettingsPage() {
         <h1 className="page-title">⚙️ Paramètres</h1>
         <p className="page-subtitle">Configuration du bureau de change</p>
       </div>
-      <SettingsClient settings={settings} users={users} currentUserId={user.id} />
+      <SettingsClient
+        settings={settings}
+        users={users}
+        currentUserId={user.id}
+        currentUserRole={user.role}
+      />
     </div>
   )
 }

@@ -4,7 +4,7 @@ import { getSessionUser } from '@/lib/auth'
 import { redirect, notFound } from 'next/navigation'
 import { getEmployeeById } from '@/services/hr.service'
 import { formatMGA } from '@/lib/utils'
-import { formatCIN, formatPhoneDigits} from '@/lib/formatters'
+import { formatCIN, formatPhoneDisplay } from '@/lib/formatters'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -65,7 +65,7 @@ export default async function EmployeeDetailPage({ params }: PageProps) {
             </div>
             <div className="ib-row">
               <span className="ib-label">Téléphone</span>
-              <span className="ib-value">{employee.phone ? formatPhoneDigits(employee.phone) : '—'}</span>
+              <span className="ib-value">{formatPhoneDisplay(employee.phone)}</span>
             </div>
             <div className="ib-row">
               <span className="ib-label">Email</span>

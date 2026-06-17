@@ -2,12 +2,14 @@
  * Formate un prénom avec majuscule à la première lettre de chaque mot
  */
 export function formatFirstName(value: string): string {
+  // Conserver le trailing space pour permettre la saisie de prénoms composés
+  const trailingSpace = value.endsWith(' ') ? ' ' : ''
   return value
     .toLowerCase()
     .split(' ')
     .filter(w => w.length > 0)
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
+    .join(' ') + trailingSpace
 }
 
 /**

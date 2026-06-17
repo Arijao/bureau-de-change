@@ -311,3 +311,41 @@ export async function resetAllDataAction(): Promise<{ success?: boolean; error?:
     return { error: e.message ?? 'Erreur inconnue' }
   }
 }
+
+// ── CHANGEMENT DE MOT DE PASSE PROPRE (CAISSIER) ─────────────────────────────
+// Action distincte de changePasswordAction (réservée à l'ADMIN).
+// Permet à un CAISSIER de changer son propre mot de passe après l'attribution initiale.
+
+export async function changeOwnPasswordAction(
+  currentPassword: string,
+  newPassword: string
+): Promise<{ success?: boolean; isSelf?: boolean; error?: string }> {
+  const user = await getSessionUser()
+  if (!user) return { error: 'Non authentifié' }
+  // Les deux rôles peuvent changer leur propre mot de passe
+  if (newPassword.length < 6) return { error: 'Mot de passe trop court (6 caractères minimum)' }
+
+  const record = await prisma.user.findUnique({ where: { id: user.id } })
+  if (!record || hashPassword(currentPassword) !== record.passwordHash) {
+    return { error: 'Mot de passe actuel incorrect' }
+  }
+
+  try {
+    await prisma.user.update({
+      where: { id: user.id },
+      data:  { passwordHash: hashPassword(newPassword) },
+    })
+
+    // Régénérer la session courante, fermer les autres
+    const currentToken = await getCurrentToken()
+    if (currentToken) {
+      await renewSession(user.id, currentToken)
+    } else {
+      await deleteAllUserSessions(user.id)
+    }
+
+    return { success: true, isSelf: true }
+  } catch (e: any) {
+    return { error: e.message ?? 'Erreur changement mot de passe' }
+  }
+}
