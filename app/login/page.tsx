@@ -2,11 +2,13 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getLoginSettings } from './actions'
+import PasswordInput from '@/components/ui/PasswordInput'
 
 export default function LoginPage() {
   const router = useRouter()
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [password, setPassword] = useState('')
   const [settings, setSettings] = useState({
     bureauName: 'Bureau de Change',
     logoBase64: null as string | null,
@@ -30,7 +32,7 @@ export default function LoginPage() {
     const res = await fetch('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: fd.get('username'), password: fd.get('password') }),
+      body: JSON.stringify({ username: fd.get('username'), password }),
     })
     const data = await res.json()
     setLoading(false)
@@ -77,7 +79,14 @@ export default function LoginPage() {
           </div>
           <div className="form-group">
             <label className="form-label">Mot de passe</label>
-            <input className="form-control" name="password" type="password" placeholder="••••••••" required />
+            <PasswordInput
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="••••••••"
+              autoComplete="current-password"
+              disabled={loading}
+              required
+            />
           </div>
           <button type="submit" className="btn btn-primary btn-block btn-lg" disabled={loading}>
             {loading ? 'Connexion...' : 'Se connecter'}

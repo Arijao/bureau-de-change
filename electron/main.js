@@ -1,4 +1,4 @@
-const { app, BrowserWindow, shell, dialog } = require('electron')
+const { app, BrowserWindow, shell, dialog, ipcMain } = require('electron')
 const path = require('path')
 const { spawn, execFileSync } = require('child_process')
 const fs = require('fs')
@@ -34,6 +34,10 @@ function setupAutoUpdater() {
 
   autoUpdater.on('update-available', (info) => {
     console.log('[updater] Mise à jour disponible:', info.version)
+    mainWindow?.webContents.send('update-available', {
+      version: info.version,
+      releaseDate: info.releaseDate ?? null,
+    })
   })
 
   autoUpdater.on('update-not-available', () => {
@@ -41,11 +45,14 @@ function setupAutoUpdater() {
   })
 
   autoUpdater.on('download-progress', (progress) => {
-    console.log(`[updater] Téléchargement: ${Math.round(progress.percent)}%`)
+    const percent = Math.round(progress.percent)
+    console.log(`[updater] Téléchargement: ${percent}%`)
+    mainWindow?.webContents.send('update-download-progress', { percent })
   })
 
   autoUpdater.on('update-downloaded', (info) => {
     console.log('[updater] Mise à jour téléchargée:', info.version)
+    mainWindow?.webContents.send('update-downloaded')
     // Proposer le redémarrage à l'utilisateur
     dialog.showMessageBox(mainWindow, {
       type: 'info',
@@ -74,6 +81,11 @@ function setupAutoUpdater() {
   setInterval(() => {
     autoUpdater.checkForUpdates().catch(() => {})
   }, 2 * 60 * 60 * 1000)
+
+  ipcMain.removeAllListeners('install-update')
+  ipcMain.on('install-update', () => {
+    autoUpdater.quitAndInstall(false, true)
+  })
 }
 
 // ── Chemins et initialisation de la DB ──────────────────────────────────────
@@ -288,6 +300,7 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js'),
     },
   })
 

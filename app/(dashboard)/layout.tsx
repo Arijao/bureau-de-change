@@ -4,6 +4,7 @@ import { getSessionBanner }     from '@/services/cash-session.service'  // ← A
 import { redirect }             from 'next/navigation'
 import { cookies }              from 'next/headers'
 import Navbar                   from '@/components/layout/Navbar'
+import UpdateNotifier           from '@/components/ui/UpdateNotifier'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = await getSessionUser()
@@ -25,6 +26,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
         logoBase64={settings.logoBase64 ?? null}
       />
       <main className="main-content">{children}</main>
+
+      <UpdateNotifier />
 
       {/* Signature développeur */}
       <div className="dev-signature">

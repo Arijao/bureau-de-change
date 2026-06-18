@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { changeOwnPasswordAction } from '@/actions/settings.actions'
+import PasswordInput from '@/components/ui/PasswordInput'
 
 interface Props {
   userName: string
@@ -45,35 +46,32 @@ export default function ChangePasswordForm({ userName }: Props) {
         </div>
         <div className="form-group">
           <label className="form-label">Mot de passe actuel</label>
-          <input
-            className="form-control"
-            type="password"
+          <PasswordInput
             value={currentPass}
             onChange={e => setCurrentPass(e.target.value)}
             placeholder="Mot de passe actuel"
             autoComplete="current-password"
+            disabled={loading}
           />
         </div>
         <div className="form-group">
           <label className="form-label">Nouveau mot de passe</label>
-          <input
-            className="form-control"
-            type="password"
+          <PasswordInput
             value={newPass}
             onChange={e => setNewPass(e.target.value)}
             placeholder="Minimum 6 caractères"
             autoComplete="new-password"
+            disabled={loading}
           />
         </div>
         <div className="form-group">
           <label className="form-label">Confirmer le nouveau mot de passe</label>
-          <input
-            className="form-control"
-            type="password"
+          <PasswordInput
             value={confirmPass}
             onChange={e => setConfirmPass(e.target.value)}
             placeholder="Répétez le nouveau mot de passe"
             autoComplete="new-password"
+            disabled={loading}
           />
         </div>
         {msg !== null && (

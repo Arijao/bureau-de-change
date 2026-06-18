@@ -5,6 +5,7 @@ import {
   toggleUserActiveAction, updateLogoAction, updateUserAction,
   resetAllDataAction, changeOwnPasswordAction,
 } from '@/actions/settings.actions'
+import PasswordInput from '@/components/ui/PasswordInput'
 
 interface UserRow { id: string; username: string; name: string; role: string; active: boolean; createdAt: Date }
 interface Props {
@@ -490,7 +491,7 @@ export default function SettingsClient({ settings, users: initUsers, currentUser
               </div>
               <div className="form-group">
                 <label className="form-label">Mot de passe * <span className="text-muted fs-11">(min. 6 caractères)</span></label>
-                <input className="form-control" type="password" placeholder="••••••••" value={cPass} onChange={e => setCPass(e.target.value)}/>
+                <PasswordInput value={cPass} onChange={e => setCPass(e.target.value)} placeholder="••••••••" autoComplete="new-password" disabled={loading}/>
               </div>
             </div>
             <div className="btn-group">
@@ -521,19 +522,23 @@ export default function SettingsClient({ settings, users: initUsers, currentUser
             {isSelfPassword && (
               <div className="form-group">
                 <label className="form-label">Mot de passe actuel *</label>
-                <input className="form-control" type="password" placeholder="••••••••" autoFocus
+                <PasswordInput
                   value={currentPass}
                   onChange={e => { setCurrentPass(e.target.value); setModalError('') }}
-                  onKeyDown={e => e.key === 'Enter' && handleChangePassword()}
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  disabled={loading}
                 />
               </div>
             )}
             <div className="form-group">
               <label className="form-label">Nouveau mot de passe *</label>
-              <input className="form-control" type="password" placeholder="••••••••" autoFocus={!isSelfPassword}
+              <PasswordInput
                 value={newPass}
                 onChange={e => { setNewPass(e.target.value); setModalError('') }}
-                onKeyDown={e => e.key === 'Enter' && handleChangePassword()}
+                placeholder="••••••••"
+                autoComplete="new-password"
+                disabled={loading}
               />
             </div>
             <div className="btn-group">
@@ -657,8 +662,7 @@ export default function SettingsClient({ settings, users: initUsers, currentUser
           </div>
         </div>
       )}
-    </div>
-  )
+    
 
       {/* ── Section mot de passe propre (visible uniquement pour CAISSIER) ── */}
       {currentUserRole === 'CAISSIER' && (
@@ -716,4 +720,7 @@ export default function SettingsClient({ settings, users: initUsers, currentUser
           </div>
         </div>
       )}
+
+    </div>
+  )
 }
