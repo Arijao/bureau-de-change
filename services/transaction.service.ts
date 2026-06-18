@@ -467,36 +467,29 @@ export async function updateTransaction(
     // 1. Inverser l'ancien impact stock
     await reverseTransactionStock(tx, adminId, client as typeof prisma)
 
-    // 2. Vérifier le stock pour le nouveau montant si ACHAT
-    if (tx.type === 'ACHAT') {
-      const stock = await client.cashStock.findUnique({
-        where: { currencyId: tx.currencyId },
-      })
-      const available = stock?.amount ?? 0
-      if (available < amount) {
-        throw new Error(
-          `Stock insuffisant après annulation : ${available.toFixed(2)} disponible, ${amount.toFixed(2)} requis`
-        )
-      }
-    }
-
-    // 3. Appliquer les nouveaux deltas pour les DEUX stocks
-    const newForeignDelta = tx.type === 'ACHAT' ? amount : -amount
-    const newMgaDelta = tx.type === 'ACHAT' ? -newTotalMGA : newTotalMGA
-
-    const foreignStock = await client.cashStock.findUnique({
-      where: { currencyId: tx.currencyId },
-    })
-    const mgaCurrency = await client.currency.findUnique({ where: { code: 'MGA' } })
+    // 2 & 3. Récupérer foreignStock et mgaCurrency en parallèle (gain ~50ms)
+    const [foreignStock, mgaCurrency] = await Promise.all([
+      client.cashStock.findUnique({ where: { currencyId: tx.currencyId } }),
+      client.currency.findUnique({ where: { code: 'MGA' } }),
+    ])
     if (!mgaCurrency) throw new Error('Devise MGA introuvable')
+    if (!foreignStock) throw new Error('Stock introuvable pour cette devise')
 
     const mgaStock = await client.cashStock.findUnique({
       where: { currencyId: mgaCurrency.id },
     })
+    if (!mgaStock) throw new Error('Stock MGA introuvable')
 
-    if (!foreignStock || !mgaStock) throw new Error('Stock introuvable')
+    // 4. Vérifications de stock
+    const newForeignDelta = tx.type === 'ACHAT' ? amount : -amount
+    const newMgaDelta = tx.type === 'ACHAT' ? -newTotalMGA : newTotalMGA
 
     if (tx.type === 'ACHAT') {
+      if (foreignStock.amount < amount) {
+        throw new Error(
+          `Stock insuffisant après annulation : ${foreignStock.amount.toFixed(2)} disponible, ${amount.toFixed(2)} requis`
+        )
+      }
       if (mgaStock.amount + newMgaDelta < 0) {
         throw new Error(`Stock MGA insuffisant après modification : ${mgaStock.amount.toFixed(2)} disponible, ${Math.abs(newMgaDelta).toFixed(2)} requis`)
       }
@@ -506,8 +499,12 @@ export async function updateTransaction(
       }
     }
 
+    // 5. Appliquer les nouveaux deltas
     const foreignBalanceBefore = foreignStock.amount
     const foreignBalanceAfter = foreignBalanceBefore + newForeignDelta
+    const mgaBalanceBefore = mgaStock.amount
+    const mgaBalanceAfter = mgaBalanceBefore + newMgaDelta
+
     await client.cashStock.update({
       where: { id: foreignStock.id },
       data: { amount: foreignBalanceAfter },
@@ -525,8 +522,6 @@ export async function updateTransaction(
       },
     })
 
-    const mgaBalanceBefore = mgaStock.amount
-    const mgaBalanceAfter = mgaBalanceBefore + newMgaDelta
     await client.cashStock.update({
       where: { id: mgaStock.id },
       data: { amount: mgaBalanceAfter },
@@ -544,53 +539,51 @@ export async function updateTransaction(
       },
     })
 
-    // 4. Sauvegarder l'audit de modification
-    await client.transactionEdit.create({
-      data: {
-        transactionId,
-        editedBy: adminId,
-        beforeAmount: tx.amount,
-        beforeRate: tx.rate,
-        beforeCommission: tx.commission,
-        beforeTotalMGA: tx.totalMGA,
-        beforeNote: tx.note,
-        afterAmount: amount,
-        afterRate: rate,
-        afterCommission: commission,
-        afterTotalMGA: newTotalMGA,
-        afterNote: note ?? null,
-      },
-    })
-
-    // 5. Mettre à jour la transaction
-    await client.transaction.update({
-      where: { id: transactionId },
-      data: { amount, rate, commission, totalMGA: newTotalMGA, note: note ?? null },
-    })
-
-    // 6. Supprimer l'ancienne écriture comptable (sera régénérée après)
-    try {
-      const { deleteJournalEntryForTransaction } = await import('./accounting.service')
-      await deleteJournalEntryForTransaction(transactionId)
-    } catch (error) {
-      console.error(`[Comptabilité] Erreur suppression ancienne écriture pour ${tx.receiptNo}:`, error)
-    }
-
-    // 7. Audit log global
-    await client.operationLog.create({
-      data: {
-        action: 'TX_EDIT',
-        entity: 'Transaction',
-        entityId: transactionId,
-        userId: adminId,
-        detail: JSON.stringify({
-          receiptNo: tx.receiptNo,
-          before: { amount: tx.amount, rate: tx.rate, totalMGA: tx.totalMGA },
-          after: { amount, rate, totalMGA: newTotalMGA },
-        }),
-      },
-    })
+    // 6. Audit de modification + mise à jour transaction en parallèle
+    await Promise.all([
+      client.transactionEdit.create({
+        data: {
+          transactionId,
+          editedBy: adminId,
+          beforeAmount: tx.amount,
+          beforeRate: tx.rate,
+          beforeCommission: tx.commission,
+          beforeTotalMGA: tx.totalMGA,
+          beforeNote: tx.note,
+          afterAmount: amount,
+          afterRate: rate,
+          afterCommission: commission,
+          afterTotalMGA: newTotalMGA,
+          afterNote: note ?? null,
+        },
+      }),
+      client.transaction.update({
+        where: { id: transactionId },
+        data: { amount, rate, commission, totalMGA: newTotalMGA, note: note ?? null },
+      }),
+      client.operationLog.create({
+        data: {
+          action: 'TX_EDIT',
+          entity: 'Transaction',
+          entityId: transactionId,
+          userId: adminId,
+          detail: JSON.stringify({
+            receiptNo: tx.receiptNo,
+            before: { amount: tx.amount, rate: tx.rate, totalMGA: tx.totalMGA },
+            after: { amount, rate, totalMGA: newTotalMGA },
+          }),
+        },
+      }),
+    ])
   })
+
+  // 7. Supprimer l'ancienne écriture comptable HORS transaction (évite le timeout — même pattern que deleteTransaction)
+  try {
+    const { deleteJournalEntryForTransaction } = await import('./accounting.service')
+    await deleteJournalEntryForTransaction(transactionId)
+  } catch (error) {
+    console.error(`[Comptabilité] Erreur suppression ancienne écriture pour ${tx.receiptNo}:`, error)
+  }
 
   // 8. Régénérer l'écriture comptable avec les nouvelles valeurs (non bloquant)
   try {
