@@ -84,12 +84,24 @@ export default function TicketModal({
       <head>
         <title>Ticket ${tx.receiptNo}</title>
         <style>
-          body { font-family: 'Courier New', monospace; width: ${width}px; margin: 0 auto; padding: 10px; font-size: ${fs}px; }
+          @media print {
+            * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          }
+          body {
+            font-family: 'Courier New', monospace;
+            width: ${width}px;
+            margin: 0 auto;
+            padding: 10px;
+            font-size: ${fs}px;
+            color: #000;
+            font-weight: 500;
+          }
           .center { text-align: center; }
           .bold { font-weight: bold; }
           .row { display: flex; justify-content: space-between; margin-bottom: 4px; }
           .divider { border-top: 1px dashed #000; margin: 8px 0; }
           .total { font-size: ${fs + 2}px; font-weight: bold; }
+          span { color: #000; }
         </style>
       </head>
       <body>
@@ -157,7 +169,7 @@ export default function TicketModal({
         <div class="center" style="font-size: ${fs - 1}px; margin-top: 12px;">
           ${bureauFooter}
         </div>
-        <div class="center" style="font-size: ${fs - 2}px; margin-top: 8px; color: #666;">
+        <div class="center" style="font-size: ${fs - 1}px; margin-top: 8px; color: #000;">
           Imprimé le ${new Date().toLocaleString('fr-FR')}
         </div>
       </body>

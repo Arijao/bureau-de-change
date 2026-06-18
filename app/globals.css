@@ -30,6 +30,61 @@
   --radius-lg: 12px;
 }
 
+/* ── DARK MODE ─────────────────────────────────────────── */
+[data-theme="dark"] {
+  color-scheme: dark; /* Scrollbars et contrôles natifs en sombre */
+
+  /* Backgrounds — tons brun-chaud foncés, cohérents avec la palette earthy */
+  --bg:  #111110;
+  --bg2: #1c1b1a;
+  --bg3: #252320;
+
+  /* Textes */
+  --text:  #f0ede8;   /* Symétrique de --bg light : même teinte, inversée */
+  --text2: #a09890;
+  --text3: #6b6560;
+
+  /* Bordures */
+  --border:  #2e2c2a;
+  --border2: #3d3a36;
+
+  /* Sémantiques — plus lumineuses pour garder le contraste sur fond sombre */
+  --green:       #4caf7d;
+  --green-bg:    #0d2b1d;
+  --green-light: #4caf7d;
+
+  --red:    #e07070;
+  --red-bg: #2b1210;
+
+  --blue:    #6ba3de;
+  --blue-bg: #0d1e33;
+
+  --amber:    #d4922e;
+  --amber-bg: #2b1d08;
+
+  /* Accent */
+  --accent:       #4b7cf3;
+  --accent-hover: #6b96f8;
+
+  /* Ombres plus prononcées (fond sombre = contraste ombre réduit) */
+  --shadow:    0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.6);
+
+  /* Variables session banner (non définies en :root, seulement en fallback) */
+  --color-success: #4caf7d;
+  --color-warning: #d4922e;
+}
+
+/* ── Overrides pour les couleurs hardcodées ─────────────── */
+[data-theme="dark"] .chart-fill-default       { background: #4a6ab0; }
+[data-theme="dark"] .alert-success            { border-color: rgba(76, 175, 125, 0.3); }
+[data-theme="dark"] .alert-error              { border-color: rgba(224, 112, 112, 0.3); }
+[data-theme="dark"] .alert-info               { border-color: rgba(107, 163, 222, 0.3); }
+[data-theme="dark"] .alert-banner             { border-color: rgba(212, 146, 46, 0.35); }
+[data-theme="dark"] .stock-info-low           { border-color: rgba(224, 112, 112, 0.25); }
+[data-theme="dark"] .tpm-row                  { border-bottom-color: #3a3835; }
+[data-theme="dark"] .modal-overlay            { background: rgba(0, 0, 0, 0.65); }
+
 * {
   box-sizing: border-box;
 }

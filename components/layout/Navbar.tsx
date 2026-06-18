@@ -3,7 +3,8 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState, useRef, useEffect } from 'react'
-import type { CashSessionBanner } from '@/lib/types'  // ← AJOUT (côté serveur → prop)
+import type { CashSessionBanner } from '@/lib/types'  
+import { ThemeToggle } from '@/components/ui/ThemeToggle'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -350,14 +351,12 @@ export default function Navbar({ user, bureauName, sessionBanner, logoBase64 }: 
           {user.role}
         </span>
         {!isAdmin && (
-          <Link
-            href="/profile"
-            className={`navbar-link ${pathname === '/profile' ? 'active' : ''}`}
-            style={{ fontSize: '0.85rem' }}
-          >
+          <Link href="/profile" className={`navbar-link ${pathname === '/profile' ? 'active' : ''}`}
+            style={{ fontSize: '0.85rem' }}>
             🔑 Mon profil
           </Link>
         )}
+        <ThemeToggle />  {/* ← AJOUT : placé juste avant Déconnexion */}
         <button className="btn-logout" onClick={handleLogout}>Déconnexion</button>
       </div>
 
