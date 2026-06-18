@@ -669,7 +669,7 @@ export default function TransactionTable({
             <div style={{display:'flex', flexDirection:'column', gap:8}}>
               <button 
                 className="btn btn-lg" 
-                style={{background:'var(--surface,#f8fafc)', border:'1px solid var(--border,#e2e8f0)'}}
+                style={{background:'var(--bg2,#ffffff)', border:'1px solid var(--border,#e2e8f0)', color:'var(--text,#1a1916)'}}
                 onClick={() => {
                   setTicketTx(printMenuTx)
                   setPrintMenuTx(null)
@@ -677,10 +677,10 @@ export default function TransactionTable({
               >
                 🧾 Ticket 58 mm
               </button>
-              
+
               <button 
                 className="btn btn-lg" 
-                style={{background:'var(--surface,#f8fafc)', border:'1px solid var(--border,#e2e8f0)'}}
+                style={{background:'var(--bg2,#ffffff)', border:'1px solid var(--border,#e2e8f0)', color:'var(--text,#1a1916)'}}
                 onClick={() => {
                   setTicketTx({...printMenuTx, size:'MM80'})
                   setPrintMenuTx(null)

@@ -154,7 +154,7 @@ export default function TransactionForm({ currencies, userName, bureauName, bure
             <label className="form-label">Devise *</label>
             <select className="form-control" value={currencyId} onChange={e => setCurrencyId(parseInt(e.target.value) || '')}>
               <option value="">— Choisir —</option>
-              {currencies.map(c => (
+              {currencies.filter(c => c.code !== 'MGA').map(c => (
                 <option key={c.id} value={c.id}>{c.flag} {c.code} — {c.name} {c.stock?.isLow ? '⚠️' : ''}</option>
               ))}
             </select>
