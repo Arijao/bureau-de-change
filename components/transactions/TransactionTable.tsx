@@ -6,6 +6,15 @@ import AttestationModal from '@/components/ticket/AttestationModal'
 import { deleteTransactionAction, updateTransactionAction, deleteTransactionWithOverrideAction, updateTransactionWithOverrideAction } from '@/actions/transaction.actions'
 import CurrencyFlag from '@/components/ui/CurrencyFlag'
 
+interface TxDetail {
+  categoryName: string
+  denomination: number
+  quantity: number
+  rateApplied: number
+  subtotalAmount: number
+  subtotalMGA: number
+}
+
 interface TxRow {
   id: string; receiptNo: string; type: string; createdAt: Date
   amount: number; rate: number; commission: number; totalMGA: number
@@ -13,6 +22,7 @@ interface TxRow {
   currency: { id: number; code: string; flag: string; name: string }
   user: { name: string }|null
   size?: string  // Taille du ticket (MM58 ou MM80)
+  details?: TxDetail[]
 }
 
 interface Props {

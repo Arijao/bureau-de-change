@@ -191,6 +191,7 @@ export async function getTransactions(filters: {
         user: { select: { name: true } },
         exchangeRate: true,
         journalEntry: { select: { id: true, date: true } },
+        details: true, 
       },
       orderBy: { createdAt: 'desc' }, take: filters.limit ?? 100, skip: filters.offset ?? 0,
     }),
@@ -209,6 +210,7 @@ export async function getTransactionById(id: string) {
       exchangeRate: true,
       receipt: true,
       journalEntry: true,
+      details: true,
     },
   })
 }
