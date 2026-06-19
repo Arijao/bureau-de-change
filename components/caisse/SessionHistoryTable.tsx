@@ -107,22 +107,22 @@ export default function SessionHistoryTable({ initialSessions, totalInitial, use
 
       {/* Filtres */}
       <div style={{
-        background: 'white', border: '1px solid #e5e7eb', borderRadius: 10,
+        background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 10,
         padding: 16, marginBottom: 20,
       }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr) auto auto', gap: 12, alignItems: 'flex-end' }}>
 
           <div>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6b7280', marginBottom: 4 }}>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text2)', marginBottom: 4 }}>
               CAISSIER
             </label>
             <select
               value={filterUser}
               onChange={e => setFilterUser(e.target.value)}
               style={{
-                width: '100%', padding: '7px 10px', border: '1px solid #d1d5db',
-                borderRadius: 6, fontSize: 13, background: 'white',
-              }}
+                width: '100%', padding: '7px 10px', border: '1px solid var(--border2)',
+                  borderRadius: 6, fontSize: 13, background: 'var(--bg2)', color: 'var(--text)',
+                }}
             >
               <option value="">Tous</option>
               {users.map(u => (
@@ -132,16 +132,16 @@ export default function SessionHistoryTable({ initialSessions, totalInitial, use
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6b7280', marginBottom: 4 }}>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text2)', marginBottom: 4 }}>
               STATUT
             </label>
             <select
               value={filterStatus}
               onChange={e => setFilterStatus(e.target.value)}
               style={{
-                width: '100%', padding: '7px 10px', border: '1px solid #d1d5db',
-                borderRadius: 6, fontSize: 13, background: 'white',
-              }}
+                width: '100%', padding: '7px 10px', border: '1px solid var(--border2)',
+                  borderRadius: 6, fontSize: 13, background: 'var(--bg2)', color: 'var(--text)',
+                }}
             >
               <option value="">Tous</option>
               <option value="OPEN">Ouverte</option>
@@ -150,7 +150,7 @@ export default function SessionHistoryTable({ initialSessions, totalInitial, use
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6b7280', marginBottom: 4 }}>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text2)', marginBottom: 4 }}>
               DU
             </label>
             <input
@@ -158,14 +158,15 @@ export default function SessionHistoryTable({ initialSessions, totalInitial, use
               value={filterFrom}
               onChange={e => setFilterFrom(e.target.value)}
               style={{
-                width: '100%', padding: '7px 10px', border: '1px solid #d1d5db',
+                width: '100%', padding: '7px 10px', border: '1px solid var(--border2)',
                 borderRadius: 6, fontSize: 13, boxSizing: 'border-box',
+                background: 'var(--bg2)', color: 'var(--text)',
               }}
             />
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6b7280', marginBottom: 4 }}>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text2)', marginBottom: 4 }}>
               AU
             </label>
             <input
@@ -173,8 +174,9 @@ export default function SessionHistoryTable({ initialSessions, totalInitial, use
               value={filterTo}
               onChange={e => setFilterTo(e.target.value)}
               style={{
-                width: '100%', padding: '7px 10px', border: '1px solid #d1d5db',
+                width: '100%', padding: '7px 10px', border: '1px solid var(--border2)',
                 borderRadius: 6, fontSize: 13, boxSizing: 'border-box',
+                background: 'var(--bg2)', color: 'var(--text)',
               }}
             />
           </div>
@@ -201,31 +203,31 @@ export default function SessionHistoryTable({ initialSessions, totalInitial, use
 
       {/* Tableau */}
       <div style={{
-        background: 'white', border: '1px solid #e5e7eb',
+        background: 'var(--bg2)', border: '1px solid var(--border)',
         borderRadius: 10, overflow: 'hidden',
       }}>
         <div style={{
-          padding: '10px 16px', background: '#f9fafb', borderBottom: '1px solid #e5e7eb',
+          padding: '10px 16px', background: 'var(--bg3)', borderBottom: '1px solid var(--border)',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
             Sessions {total > 0 ? `(${total})` : ''}
           </span>
           {isPending && (
-            <span style={{ fontSize: 11, color: '#9ca3af' }}>Chargement…</span>
+            <span style={{ fontSize: 11, color: 'var(--text3)' }}>Chargement…</span>
           )}
         </div>
 
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
-              <tr style={{ background: '#f9fafb' }}>
+              <tr style={{ background: 'var(--bg3)' }}>
                 {['N° Session', 'Caissier', 'Ouverture', 'Clôture', 'Durée', 'Tx / Dép', 'Statut', 'Actions'].map((h, i) => (
                   <th key={i} style={{
                     padding: '8px 12px', textAlign: 'left',
-                    fontSize: 11, fontWeight: 600, color: '#6b7280',
+                    fontSize: 11, fontWeight: 600, color: 'var(--text2)',
                     textTransform: 'uppercase', letterSpacing: '0.04em',
-                    borderBottom: '1px solid #e5e7eb', whiteSpace: 'nowrap',
+                    borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap',
                   }}>
                     {h}
                   </th>
@@ -246,7 +248,7 @@ export default function SessionHistoryTable({ initialSessions, totalInitial, use
                 const isClosed = s.status === 'CLOSED'
                 return (
                   <tr key={s.id} style={{
-                    borderBottom: '1px solid #f3f4f6',
+                    borderBottom: '1px solid var(--border)',
                     opacity: isPending ? 0.6 : 1,
                     transition: 'opacity 0.15s',
                   }}>
@@ -261,22 +263,22 @@ export default function SessionHistoryTable({ initialSessions, totalInitial, use
                       <span style={{ fontWeight: 500 }}>👤 {s.user.name}</span>
                       <span style={{
                         marginLeft: 6, fontSize: 10, padding: '1px 5px', borderRadius: 3,
-                        background: s.user.role === 'ADMIN' ? '#fef3c7' : '#f0f9ff',
-                        color:      s.user.role === 'ADMIN' ? '#92400e' : '#0369a1',
+                        background: s.user.role === 'ADMIN' ? 'var(--amber-bg)' : 'var(--blue-bg)',
+                        color:      s.user.role === 'ADMIN' ? 'var(--amber)'    : 'var(--blue)',
                       }}>
                         {s.user.role}
                       </span>
                     </td>
 
-                    <td style={{ padding: '10px 12px', whiteSpace: 'nowrap', color: '#6b7280', fontSize: 12 }}>
+                    <td style={{ padding: '10px 12px', whiteSpace: 'nowrap', color: 'var(--text2)', fontSize: 12 }}>
                       {fmtDate(s.openedAt)}
                     </td>
 
-                    <td style={{ padding: '10px 12px', whiteSpace: 'nowrap', color: '#6b7280', fontSize: 12 }}>
-                      {s.closedAt ? fmtDate(s.closedAt) : <span style={{ color: '#16a34a' }}>En cours</span>}
+                    <td style={{ padding: '10px 12px', whiteSpace: 'nowrap', color: 'var(--text2)', fontSize: 12 }}>
+                      {s.closedAt ? fmtDate(s.closedAt) : <span style={{ color: 'var(--green)' }}>En cours</span>}
                     </td>
 
-                    <td style={{ padding: '10px 12px', whiteSpace: 'nowrap', color: '#374151' }}>
+                    <td style={{ padding: '10px 12px', whiteSpace: 'nowrap', color: 'var(--text)' }}>
                       {fmtDuration(s.openedAt, s.closedAt)}
                     </td>
 
@@ -291,9 +293,9 @@ export default function SessionHistoryTable({ initialSessions, totalInitial, use
                     <td style={{ padding: '10px 12px' }}>
                       <span style={{
                         fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 999,
-                        background: isClosed ? '#f3f4f6' : '#dcfce7',
-                        color:      isClosed ? '#6b7280' : '#15803d',
-                        border:     `1px solid ${isClosed ? '#e5e7eb' : '#86efac'}`,
+                        background: isClosed ? 'var(--bg3)'       : 'var(--green-bg)',
+                        color:      isClosed ? 'var(--text2)'     : 'var(--green)',
+                        border:     `1px solid ${isClosed ? 'var(--border2)' : 'var(--green-light)'}`,
                       }}>
                         {isClosed ? 'Clôturée' : '● Ouverte'}
                       </span>
@@ -305,8 +307,8 @@ export default function SessionHistoryTable({ initialSessions, totalInitial, use
                           href={`/caisse/rapport/${s.id}`}
                           style={{
                             fontSize: 11, padding: '4px 10px', borderRadius: 5,
-                            background: '#eff6ff', color: '#2563eb',
-                            border: '1px solid #bfdbfe', textDecoration: 'none', fontWeight: 500,
+                            background: 'var(--blue-bg)', color: 'var(--accent)',
+                            border: '1px solid var(--blue)', textDecoration: 'none', fontWeight: 500,
                           }}
                         >
                           Rapport
@@ -324,10 +326,10 @@ export default function SessionHistoryTable({ initialSessions, totalInitial, use
         {/* Pagination */}
         {totalPages > 1 && (
           <div style={{
-            padding: '12px 16px', borderTop: '1px solid #e5e7eb',
+            padding: '12px 16px', borderTop: '1px solid var(--border)',
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           }}>
-            <span style={{ fontSize: 12, color: '#6b7280' }}>
+            <span style={{ fontSize: 12, color: 'var(--text2)' }}>
               Page {page + 1} / {totalPages} · {total} sessions
             </span>
             <div style={{ display: 'flex', gap: 6 }}>

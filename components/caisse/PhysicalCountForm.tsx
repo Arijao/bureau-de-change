@@ -191,15 +191,15 @@ export default function PhysicalCountForm({ session, currencies, onCancel }: Pro
 
       {/* En-tête clôture */}
       <div style={{
-        background: 'linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%)',
-        border: '1px solid #fecdd3', borderRadius: 12, padding: 20, marginBottom: 24,
+        background: 'var(--red-bg)',
+        border: '1px solid var(--red)', borderRadius: 12, padding: 20, marginBottom: 24,
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <h2 style={{ margin: '0 0 4px', fontSize: 17, fontWeight: 700, color: '#9f1239' }}>
+            <h2 style={{ margin: '0 0 4px', fontSize: 17, fontWeight: 700, color: 'var(--red)' }}>
               🔒 Clôture — {session.sessionNo}
             </h2>
-            <p style={{ margin: 0, fontSize: 13, color: '#be123c' }}>
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--red)' }}>
               Caissier : {session.user.name} · Durée : {formatDuration(session.openedAt)}
               {session._count && ` · ${session._count.transactions} transaction(s) · ${session._count.expenses} dépense(s)`}
             </p>
@@ -208,8 +208,8 @@ export default function PhysicalCountForm({ session, currencies, onCancel }: Pro
             type="button"
             onClick={onCancel}
             style={{
-              background: 'none', border: '1px solid #fda4af', borderRadius: 6,
-              padding: '4px 12px', fontSize: 12, cursor: 'pointer', color: '#9f1239',
+              background: 'none', border: '1px solid var(--red)', borderRadius: 6,
+              padding: '4px 12px', fontSize: 12, cursor: 'pointer', color: 'var(--red)',
             }}
           >
             ← Annuler
@@ -219,8 +219,8 @@ export default function PhysicalCountForm({ session, currencies, onCancel }: Pro
 
       {/* Instructions */}
       <div style={{
-        background: '#f0f9ff', border: '1px solid #bae6fd',
-        borderRadius: 8, padding: '10px 14px', marginBottom: 20, fontSize: 12, color: '#0369a1',
+        background: 'var(--blue-bg)', border: '1px solid var(--blue)',
+        borderRadius: 8, padding: '10px 14px', marginBottom: 20, fontSize: 12, color: 'var(--blue)',
       }}>
         <strong>Comment procéder :</strong> Comptez physiquement les billets et pièces de chaque devise
         et saisissez les quantités ci-dessous. Le rapport calculera automatiquement les écarts.
@@ -233,27 +233,27 @@ export default function PhysicalCountForm({ session, currencies, onCancel }: Pro
 
           return (
             <div key={c.currencyId} style={{
-              background: 'white', border: '1px solid #e5e7eb',
+              background: 'var(--bg2)', border: '1px solid var(--border)',
               borderRadius: 10, overflow: 'hidden',
             }}>
               {/* En-tête devise */}
               <div style={{
-                padding: '10px 16px', background: '#f9fafb',
-                borderBottom: '1px solid #e5e7eb',
+                padding: '10px 16px', background: 'var(--bg3)',
+                borderBottom: '1px solid var(--border)',
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <CurrencyFlag code={c.currencyCode} flag={c.currencyFlag} size={22} />
-                  <span style={{ fontWeight: 700, fontSize: 15, color: '#111827' }}>{c.currencyCode}</span>
+                  <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--text)' }}>{c.currencyCode}</span>
                   {c.openingBalance > 0 && (
-                    <span style={{ fontSize: 11, color: '#9ca3af' }}>
+                    <span style={{ fontSize: 11, color: 'var(--text3)' }}>
                       (ouverture : {fmt(c.openingBalance, c.currencyCode)})
                     </span>
                   )}
                 </div>
                 <span style={{
                   fontWeight: 700, fontSize: 15,
-                  color: total > 0 ? '#111827' : '#9ca3af',
+                  color: total > 0 ? 'var(--text)' : 'var(--text3)',
                 }}>
                   Total compté : {fmt(total, c.currencyCode)}
                 </span>
@@ -273,11 +273,12 @@ export default function PhysicalCountForm({ session, currencies, onCancel }: Pro
                       onChange={e => updateSimple(ci, parseFloat(e.target.value) || 0)}
                       placeholder="0.00"
                       style={{
-                        padding: '7px 12px', border: '1px solid #d1d5db',
+                        padding: '7px 12px', border: '1px solid var(--border2)',
+                        background: 'var(--bg2)', color: 'var(--text)',
                         borderRadius: 6, fontSize: 14, width: 160, textAlign: 'right',
                       }}
                     />
-                    <span style={{ fontSize: 13, color: '#6b7280' }}>{c.currencyCode}</span>
+                    <span style={{ fontSize: 13, color: 'var(--text2)' }}>{c.currencyCode}</span>
                   </div>
                 ) : (
                   /* Grille de coupures par catégorie */
@@ -297,15 +298,15 @@ export default function PhysicalCountForm({ session, currencies, onCancel }: Pro
                         {g.rows.map((r, ri) => (
                           <div key={ri} style={{
                             display: 'flex', alignItems: 'center', gap: 8,
-                            background: r.quantity > 0 ? '#f0fdf4' : '#fafafa',
-                            border: `1px solid ${r.quantity > 0 ? '#86efac' : '#e5e7eb'}`,
+                            background: r.quantity > 0 ? 'var(--green-bg)' : 'var(--bg3)',
+                            border: `1px solid ${r.quantity > 0 ? 'var(--green-light)' : 'var(--border)'}`,
                             borderRadius: 6, padding: '6px 10px',
                             transition: 'all 0.15s',
                           }}>
-                            <span style={{ fontSize: 12, color: '#6b7280', minWidth: 64, textAlign: 'right' }}>
+                            <span style={{ fontSize: 12, color: 'var(--text2)', minWidth: 64, textAlign: 'right' }}>
                               {r.denomination.toLocaleString('fr-FR')}
                             </span>
-                            <span style={{ color: '#9ca3af', fontSize: 11 }}>×</span>
+                            <span style={{ color: 'var(--text3)', fontSize: 11 }}>×</span>
                             <input
                               type="number" min="0"
                               value={r.quantity || ''}
@@ -313,12 +314,13 @@ export default function PhysicalCountForm({ session, currencies, onCancel }: Pro
                               placeholder="0"
                               style={{
                                 width: 52, padding: '3px 6px',
-                                border: '1px solid #d1d5db', borderRadius: 4,
+                                border: '1px solid var(--border2)', borderRadius: 4,
+                                background: 'var(--bg2)', color: 'var(--text)',
                                 fontSize: 13, textAlign: 'center',
                               }}
                             />
                             {r.quantity > 0 && (
-                              <span style={{ fontSize: 11, color: '#16a34a', marginLeft: 'auto' }}>
+                              <span style={{ fontSize: 11, color: 'var(--green)', marginLeft: 'auto' }}>
                                 = {(r.denomination * r.quantity).toLocaleString('fr-FR')}
                               </span>
                             )}
@@ -336,7 +338,7 @@ export default function PhysicalCountForm({ session, currencies, onCancel }: Pro
 
       {/* Note de clôture */}
       <div style={{ marginBottom: 20 }}>
-        <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>
+        <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--text)', marginBottom: 6 }}>
           Note de clôture (optionnelle)
         </label>
         <textarea
@@ -345,7 +347,8 @@ export default function PhysicalCountForm({ session, currencies, onCancel }: Pro
           placeholder="Ex : Fin de service normal, passation à Caissier B..."
           rows={2}
           style={{
-            width: '100%', padding: '8px 12px', border: '1px solid #d1d5db',
+            width: '100%', padding: '8px 12px', border: '1px solid var(--border2)',
+            background: 'var(--bg2)', color: 'var(--text)',
             borderRadius: 8, fontSize: 13, resize: 'vertical', boxSizing: 'border-box',
           }}
         />
@@ -353,7 +356,7 @@ export default function PhysicalCountForm({ session, currencies, onCancel }: Pro
 
       {/* Confirmation */}
       <div style={{
-        background: '#fefce8', border: '1px solid #fde047',
+        background: 'var(--amber-bg)', border: '1px solid var(--amber)',
         borderRadius: 8, padding: '10px 14px', marginBottom: 20,
         display: 'flex', alignItems: 'center', gap: 10,
       }}>
@@ -362,9 +365,9 @@ export default function PhysicalCountForm({ session, currencies, onCancel }: Pro
           id="confirm-close"
           checked={confirmed}
           onChange={e => setConfirmed(e.target.checked)}
-          style={{ width: 16, height: 16, cursor: 'pointer' }}
+          style={{ width: 16, height: 16, cursor: 'pointer', accentColor: 'var(--accent)' }}
         />
-        <label htmlFor="confirm-close" style={{ fontSize: 13, color: '#713f12', cursor: 'pointer' }}>
+        <label htmlFor="confirm-close" style={{ fontSize: 13, color: 'var(--text)', cursor: 'pointer' }}>
           Je confirme avoir effectué le comptage physique et souhaite clôturer cette session.
         </label>
       </div>

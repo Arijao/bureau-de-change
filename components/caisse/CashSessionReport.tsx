@@ -153,11 +153,11 @@ const PRINT_STYLES = `
 @media print {
   .no-print { display: none !important; }
   .page-container { padding: 0 !important; max-width: 100% !important; }
-  body { font-size: 11pt !important; }
-  .report-section { break-inside: avoid; }
+  body { font-size: 11pt !important; background: white !important; color: black !important; }
+  .report-section { break-inside: avoid; background: white !important; color: black !important; }
   .report-header { border: 2px solid #000 !important; }
   table { width: 100% !important; }
-  th, td { padding: 4pt 6pt !important; font-size: 9pt !important; }
+  th, td { padding: 4pt 6pt !important; font-size: 9pt !important; color: black !important; }
   .signature-grid { margin-top: 40pt !important; }
 }
 `
@@ -182,16 +182,16 @@ export default function CashSessionReport({ report, bureauName }: Props) {
   function Section({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) {
     return (
       <div className="report-section" style={{
-        background: 'white', border: '1px solid #e5e7eb',
+        background: 'var(--bg2)', border: '1px solid var(--border)',
         borderRadius: 10, overflow: 'hidden', marginBottom: 16,
       }}>
         <div style={{
-          padding: '10px 16px', background: '#f9fafb',
-          borderBottom: '1px solid #e5e7eb',
+          padding: '10px 16px', background: 'var(--bg3)',
+          borderBottom: '1px solid var(--border)',
           display: 'flex', alignItems: 'center', gap: 8,
         }}>
           <span style={{ fontSize: 16 }}>{icon}</span>
-          <h3 style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#374151' }}>{title}</h3>
+          <h3 style={{ margin: 0, fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{title}</h3>
         </div>
         <div style={{ padding: 16 }}>{children}</div>
       </div>
@@ -209,13 +209,13 @@ export default function CashSessionReport({ report, bureauName }: Props) {
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
-            <tr style={{ background: '#f9fafb' }}>
+            <tr style={{ background: 'var(--bg3)' }}>
               {headers.map((h, i) => (
                 <th key={i} style={{
                   padding: '8px 12px', textAlign: 'left',
-                  fontSize: 11, fontWeight: 600, color: '#6b7280',
+                  fontSize: 11, fontWeight: 600, color: 'var(--text2)',
                   textTransform: 'uppercase', letterSpacing: '0.04em',
-                  borderBottom: '1px solid #e5e7eb',
+                  borderBottom: '1px solid var(--border)',
                 }}>
                   {h}
                 </th>
@@ -233,9 +233,9 @@ export default function CashSessionReport({ report, bureauName }: Props) {
                 </td>
               </tr>
             ) : rows.map((cells, ri) => (
-              <tr key={ri} style={{ borderBottom: '1px solid #f3f4f6' }}>
+              <tr key={ri} style={{ borderBottom: '1px solid var(--border)' }}>
                 {cells.map((cell, ci) => (
-                  <td key={ci} style={{ padding: '9px 12px', color: '#374151' }}>{cell}</td>
+                  <td key={ci} style={{ padding: '9px 12px', color: 'var(--text)' }}>{cell}</td>
                 ))}
               </tr>
             ))}
@@ -256,10 +256,10 @@ export default function CashSessionReport({ report, bureauName }: Props) {
         marginBottom: 20,
       }}>
         <div style={{ display: 'flex', gap: 10 }}>
-          <Link href="/caisse" className="btn btn-secondary" style={{ fontSize: 13 }}>
+          <Link href="/caisse" className="btn btn-outline" style={{ fontSize: 13, color: 'var(--text)', background: 'var(--bg2)', border: '1px solid var(--border2)' }}>
             ← Ma session
           </Link>
-          <Link href="/caisse/historique" className="btn btn-secondary" style={{ fontSize: 13 }}>
+          <Link href="/caisse/historique" className="btn btn-outline" style={{ fontSize: 13, color: 'var(--text)', background: 'var(--bg2)', border: '1px solid var(--border2)' }}>
             📋 Historique
           </Link>
         </div>
@@ -282,7 +282,7 @@ export default function CashSessionReport({ report, bureauName }: Props) {
             <p style={{ margin: '0 0 4px', fontSize: 11, opacity: 0.7, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
               {bureauName}
             </p>
-            <h1 style={{ margin: '0 0 8px', fontSize: 22, fontWeight: 800 }}>
+            <h1 style={{ margin: '0 0 8px', fontSize: 22, fontWeight: 800, color: 'white' }}>
               Rapport de clôture
             </h1>
             <p style={{ margin: 0, fontSize: 16, fontWeight: 600, opacity: 0.9 }}>
@@ -334,16 +334,16 @@ export default function CashSessionReport({ report, bureauName }: Props) {
       {/* ── 2. RÉCAPITULATIF RAPIDE ─────────────────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16 }}>
         {[
-          { label: 'Transactions',    value: report.totalTransactions, color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' },
-          { label: 'Achats',          value: report.achats.length,     color: '#16a34a', bg: '#f0fdf4', border: '#86efac' },
-          { label: 'Ventes',          value: report.ventes.length,     color: '#9333ea', bg: '#faf5ff', border: '#d8b4fe' },
-          { label: 'Dépenses (MGA)',  value: `${fmt(report.totalExpensesMGA)} Ar`, color: '#c2410c', bg: '#fff7ed', border: '#fed7aa', isText: true },
+          { label: 'Transactions', value: report.totalTransactions, color: 'var(--accent)',  bg: 'var(--blue-bg)',  border: 'var(--blue)'  },
+          { label: 'Achats',       value: report.achats.length,    color: 'var(--green)',   bg: 'var(--green-bg)', border: 'var(--green-light)' },
+          { label: 'Ventes',       value: report.ventes.length,    color: 'var(--text2)',   bg: 'var(--bg3)',      border: 'var(--border2)' },
+          { label: 'Dépenses (MGA)', value: `${fmt(report.totalExpensesMGA)} Ar`, color: 'var(--red)', bg: 'var(--red-bg)', border: 'var(--red)', isText: true },
         ].map(({ label, value, color, bg, border, isText }) => (
           <div key={label} style={{
             background: bg, border: `1px solid ${border}`,
             borderRadius: 10, padding: '12px 16px', textAlign: 'center',
           }}>
-            <p style={{ margin: '0 0 4px', fontSize: 11, color: '#6b7280' }}>{label}</p>
+            <p style={{ margin: '0 0 4px', fontSize: 11, color: 'var(--text2)' }}>{label}</p>
             <p style={{ margin: 0, fontSize: isText ? 15 : 22, fontWeight: 700, color }}>{value}</p>
           </div>
         ))}
@@ -442,13 +442,13 @@ export default function CashSessionReport({ report, bureauName }: Props) {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
-                <tr style={{ background: '#f9fafb' }}>
+                <tr style={{ background: 'var(--bg3)' }}>
                   {['Devise', 'Solde ouverture', 'Solde théorique', 'Solde physique', 'Écart', 'Statut'].map((h, i) => (
                     <th key={i} style={{
                       padding: '8px 12px', textAlign: 'left',
-                      fontSize: 11, fontWeight: 600, color: '#6b7280',
+                      fontSize: 11, fontWeight: 600, color: 'var(--text2)',
                       textTransform: 'uppercase', letterSpacing: '0.04em',
-                      borderBottom: '1px solid #e5e7eb',
+                      borderBottom: '1px solid var(--border)',
                     }}>
                       {h}
                     </th>
@@ -461,8 +461,8 @@ export default function CashSessionReport({ report, bureauName }: Props) {
                   const isOk    = Math.abs(d.diff) < 0.001
                   return (
                     <tr key={i} style={{
-                      borderBottom: '1px solid #f3f4f6',
-                      background: isOk ? 'transparent' : '#fff9f9',
+                      borderBottom: '1px solid var(--border)',
+                      background: isOk ? 'transparent' : 'var(--red-bg)',
                     }}>
                       <td style={{ padding: '10px 12px' }}>
                         <span style={{ marginRight: 6 }}><CurrencyFlag code={d.currency.code} flag={d.currency.flag} size={16} /></span>
@@ -511,11 +511,11 @@ export default function CashSessionReport({ report, bureauName }: Props) {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
             {report.physicalBalances.map(pb => (
               <div key={pb.id} style={{
-                border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden',
+                border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden',
               }}>
                 <div style={{
-                  padding: '8px 12px', background: '#f9fafb',
-                  borderBottom: '1px solid #e5e7eb',
+                  padding: '8px 12px', background: 'var(--bg3)',
+                  borderBottom: '1px solid var(--border)',
                   display: 'flex', alignItems: 'center', gap: 8,
                 }}>
                   <CurrencyFlag code={pb.currency.code} flag={pb.currency.flag} size={18} />
@@ -528,22 +528,22 @@ export default function CashSessionReport({ report, bureauName }: Props) {
                       {[...pb.countDetails]
                         .sort((a, b) => b.denomination - a.denomination)
                         .map((d, i) => (
-                        <tr key={i} style={{ borderBottom: '1px solid #f9fafb' }}>
-                          <td style={{ padding: '5px 10px', color: '#6b7280', textAlign: 'right', width: 70 }}>
+                        <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
+                          <td style={{ padding: '5px 10px', color: 'var(--text2)', textAlign: 'right', width: 70 }}>
                             {fmt(d.denomination, 0)}
                           </td>
-                          <td style={{ padding: '5px 4px', color: '#9ca3af', width: 16, textAlign: 'center' }}>×</td>
+                          <td style={{ padding: '5px 4px', color: 'var(--text3)', width: 16, textAlign: 'center' }}>×</td>
                           <td style={{ padding: '5px 10px', fontWeight: 600, width: 40, textAlign: 'center' }}>
                             {d.quantity}
                           </td>
-                          <td style={{ padding: '5px 10px', textAlign: 'right', fontWeight: 600, color: '#374151' }}>
+                          <td style={{ padding: '5px 10px', textAlign: 'right', fontWeight: 600, color: 'var(--text)' }}>
                             = {fmt(d.denomination * d.quantity, 0)}
                           </td>
                         </tr>
                       ))}
-                      <tr style={{ background: '#f9fafb', fontWeight: 700 }}>
-                        <td colSpan={3} style={{ padding: '7px 10px', fontSize: 11, color: '#6b7280' }}>Total</td>
-                        <td style={{ padding: '7px 10px', textAlign: 'right', color: '#111827', fontSize: 13 }}>
+                      <tr style={{ background: 'var(--bg3)', fontWeight: 700 }}>
+                        <td colSpan={3} style={{ padding: '7px 10px', fontSize: 11, color: 'var(--text2)' }}>Total</td>
+                        <td style={{ padding: '7px 10px', textAlign: 'right', color: 'var(--text)', fontSize: 13 }}>
                           {fmt(pb.amount)} {pb.currency.code}
                         </td>
                       </tr>
@@ -562,10 +562,10 @@ export default function CashSessionReport({ report, bureauName }: Props) {
 
       {/* ── 9. SIGNATURES ───────────────────────────────────────────────────── */}
       <div className="signature-grid report-section" style={{
-        background: 'white', border: '1px solid #e5e7eb',
+        background: 'var(--bg2)', border: '1px solid var(--border)',
         borderRadius: 10, padding: 24, marginBottom: 32,
       }}>
-        <h3 style={{ margin: '0 0 20px', fontSize: 13, fontWeight: 700, color: '#374151' }}>
+        <h3 style={{ margin: '0 0 20px', fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>
           ✍ Signatures
         </h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 32 }}>
@@ -575,21 +575,21 @@ export default function CashSessionReport({ report, bureauName }: Props) {
             { title: 'Responsable',       name: 'À compléter', optional: true },
           ].map(({ title, name, optional }) => (
             <div key={title} style={{ textAlign: 'center' }}>
-              <p style={{ margin: '0 0 4px', fontSize: 11, color: '#6b7280', fontWeight: 600 }}>
+              <p style={{ margin: '0 0 4px', fontSize: 11, color: 'var(--text2)', fontWeight: 600 }}>
                 {title}{optional && ' (optionnel)'}
               </p>
-              <p style={{ margin: '0 0 40px', fontSize: 12, color: '#374151' }}>{name}</p>
-              <div style={{ borderBottom: '1.5px solid #374151', marginBottom: 4 }} />
-              <p style={{ margin: 0, fontSize: 10, color: '#9ca3af' }}>Signature & date</p>
+              <p style={{ margin: '0 0 40px', fontSize: 12, color: 'var(--text)' }}>{name}</p>
+              <div style={{ borderBottom: '1.5px solid var(--border2)', marginBottom: 4 }} />
+              <p style={{ margin: 0, fontSize: 10, color: 'var(--text3)' }}>Signature & date</p>
             </div>
           ))}
         </div>
 
         {/* Pied du rapport */}
         <div style={{
-          marginTop: 20, paddingTop: 12, borderTop: '1px solid #f3f4f6',
+          marginTop: 20, paddingTop: 12, borderTop: '1px solid var(--border)',
           display: 'flex', justifyContent: 'space-between',
-          fontSize: 10, color: '#9ca3af',
+          fontSize: 10, color: 'var(--text3)',
         }}>
           <span>Rapport généré le {new Date().toLocaleString('fr-FR')}</span>
           <span>Session {session.sessionNo} · {bureauName}</span>

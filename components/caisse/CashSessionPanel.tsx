@@ -104,8 +104,8 @@ function CurrentSessionView({
 
       {/* Carte statut session */}
       <div style={{
-        background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
-        border: '1px solid #86efac', borderRadius: 12, padding: 24,
+        background: 'var(--green-bg)',
+        border: '1px solid var(--green-light)', borderRadius: 12, padding: 24,
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -115,14 +115,14 @@ function CurrentSessionView({
               boxShadow: '0 0 0 3px rgba(22,163,74,0.25)',
               animation: 'pulse 2s infinite',
             }} />
-            <span style={{ fontSize: 18, fontWeight: 700, color: '#15803d' }}>
+            <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--green)' }}>
               Session {session.sessionNo}
             </span>
           </div>
           <span style={{
-            background: '#dcfce7', color: '#15803d', fontSize: 12,
-            fontWeight: 600, padding: '3px 10px', borderRadius: 999,
-            border: '1px solid #86efac',
+            background: 'var(--green)', color: 'var(--bg2)', fontSize: 12,
+            fontWeight: 700, padding: '3px 10px', borderRadius: 999,
+            border: '1px solid var(--green)',
           }}>
             OUVERTE
           </span>
@@ -130,28 +130,28 @@ function CurrentSessionView({
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
           <div>
-            <p style={{ fontSize: 11, color: '#6b7280', marginBottom: 2 }}>Caissier</p>
-            <p style={{ fontWeight: 600, color: '#111827' }}>👤 {session.user.name}</p>
+            <p style={{ fontSize: 11, color: 'var(--text2)', marginBottom: 2 }}>Caissier</p>
+            <p style={{ fontWeight: 600, color: 'var(--text)' }}>👤 {session.user.name}</p>
           </div>
           <div>
-            <p style={{ fontSize: 11, color: '#6b7280', marginBottom: 2 }}>Ouverte à</p>
-            <p style={{ fontWeight: 600, color: '#111827' }}>{formatDateTime(session.openedAt)}</p>
+            <p style={{ fontSize: 11, color: 'var(--text2)', marginBottom: 2 }}>Ouverte à</p>
+            <p style={{ fontWeight: 600, color: 'var(--text)' }}>{formatDateTime(session.openedAt)}</p>
           </div>
           <div>
-            <p style={{ fontSize: 11, color: '#6b7280', marginBottom: 2 }}>Durée</p>
-            <p style={{ fontWeight: 600, color: '#15803d' }}>{formatDuration(session.openedAt)}</p>
+            <p style={{ fontSize: 11, color: 'var(--text2)', marginBottom: 2 }}>Durée</p>
+            <p style={{ fontWeight: 600, color: 'var(--green)' }}>{formatDuration(session.openedAt)}</p>
           </div>
         </div>
 
         {session.previousSession && (
-          <p style={{ marginTop: 12, fontSize: 12, color: '#6b7280' }}>
+          <p style={{ marginTop: 12, fontSize: 12, color: 'var(--text2)' }}>
             Passation depuis : <strong>{session.previousSession.sessionNo}</strong>
             {session.previousSession.closedAt && ` (clôturée le ${formatDateTime(session.previousSession.closedAt)})`}
           </p>
         )}
 
         {session.openingNote && (
-          <p style={{ marginTop: 8, fontSize: 12, color: '#6b7280', fontStyle: 'italic' }}>
+          <p style={{ marginTop: 8, fontSize: 12, color: 'var(--text2)', fontStyle: 'italic' }}>
             Note d'ouverture : {session.openingNote}
           </p>
         )}
@@ -161,31 +161,31 @@ function CurrentSessionView({
       {session._count && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <div style={{
-            background: '#eff6ff', border: '1px solid #bfdbfe',
+            background: 'var(--blue-bg)', border: '1px solid var(--blue)',
             borderRadius: 10, padding: '14px 18px', textAlign: 'center',
           }}>
-            <p style={{ fontSize: 28, fontWeight: 700, color: '#1d4ed8', margin: 0 }}>
+            <p style={{ fontSize: 28, fontWeight: 700, color: 'var(--blue)', margin: 0 }}>
               {session._count.transactions}
             </p>
-            <p style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>Transaction{session._count.transactions !== 1 ? 's' : ''}</p>
+            <p style={{ fontSize: 12, color: 'var(--text2)', marginTop: 4 }}>Transaction{session._count.transactions !== 1 ? 's' : ''}</p>
           </div>
           <div style={{
-            background: '#fff7ed', border: '1px solid #fed7aa',
+            background: 'var(--amber-bg)', border: '1px solid var(--amber)',
             borderRadius: 10, padding: '14px 18px', textAlign: 'center',
           }}>
-            <p style={{ fontSize: 28, fontWeight: 700, color: '#c2410c', margin: 0 }}>
+            <p style={{ fontSize: 28, fontWeight: 700, color: 'var(--amber)', margin: 0 }}>
               {session._count.expenses}
             </p>
-            <p style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>Dépense{session._count.expenses !== 1 ? 's' : ''}</p>
+            <p style={{ fontSize: 12, color: 'var(--text2)', marginTop: 4 }}>Dépense{session._count.expenses !== 1 ? 's' : ''}</p>
           </div>
         </div>
       )}
 
       {/* Soldes d'ouverture */}
       {openingBalances.length > 0 && (
-        <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden' }}>
-          <div style={{ padding: '12px 16px', background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-            <h3 style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#374151' }}>
+        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+          <div style={{ padding: '12px 16px', background: 'var(--bg3)', borderBottom: '1px solid var(--border)' }}>
+            <h3 style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
               Soldes d'ouverture
             </h3>
           </div>
@@ -195,9 +195,9 @@ function CurrentSessionView({
                 <tr key={b.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
                   <td style={{ padding: '10px 16px' }}>
                     <span style={{ marginRight: 8 }}><CurrencyFlag code={b.currency.code} flag={b.currency.flag} size={18} /></span>
-                    <span style={{ fontWeight: 600, color: '#374151' }}>{b.currency.code}</span>
+                    <span style={{ fontWeight: 600, color: 'var(--text)' }}>{b.currency.code}</span>
                   </td>
-                  <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 600, color: '#111827' }}>
+                  <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 600, color: 'var(--text)' }}>
                     {formatAmount(b.amount, b.currency.code)}
                   </td>
                 </tr>
@@ -218,8 +218,13 @@ function CurrentSessionView({
         </button>
         <Link
           href="/caisse/historique"
-          className="btn btn-secondary"
-          style={{ padding: '12px 20px' }}
+          className="btn btn-outline"
+          style={{
+            padding: '12px 20px',
+            border: '1px solid var(--border2)',
+            color: 'var(--text)',
+            background: 'var(--bg2)',
+          }}
         >
           📋 Historique
         </Link>

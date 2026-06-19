@@ -220,16 +220,16 @@ export default function OpenSessionForm({ user, lastClosed, currencies }: Props)
 
       {/* Alerte : pas de session ouverte */}
       <div style={{
-        background: '#fff7ed', border: '1px solid #fed7aa',
+        background: 'var(--amber-bg)', border: '1px solid var(--amber)',
         borderRadius: 10, padding: '14px 18px', marginBottom: 24,
         display: 'flex', alignItems: 'center', gap: 12,
       }}>
         <span style={{ fontSize: 20 }}>⚠️</span>
         <div>
-          <p style={{ fontWeight: 600, color: '#92400e', margin: 0, fontSize: 14 }}>
+          <p style={{ fontWeight: 600, color: 'var(--amber)', margin: 0, fontSize: 14 }}>
             Aucune session ouverte
           </p>
-          <p style={{ color: '#b45309', margin: '2px 0 0', fontSize: 12 }}>
+          <p style={{ color: 'var(--amber)', margin: '2px 0 0', fontSize: 12 }}>
             Vous devez ouvrir une session pour créer des transactions.
           </p>
         </div>
@@ -238,13 +238,13 @@ export default function OpenSessionForm({ user, lastClosed, currencies }: Props)
       {/* Passation depuis session précédente */}
       {lastClosed && (
         <div style={{
-          background: '#f0f9ff', border: '1px solid #bae6fd',
+          background: 'var(--blue-bg)', border: '1px solid var(--blue)',
           borderRadius: 10, padding: '14px 18px', marginBottom: 20,
         }}>
-          <p style={{ margin: '0 0 10px', fontSize: 13, color: '#075985', fontWeight: 600 }}>
+          <p style={{ margin: '0 0 10px', fontSize: 13, color: 'var(--blue)', fontWeight: 600 }}>
             💼 Passation disponible — Session {lastClosed.sessionNo}
           </p>
-          <p style={{ margin: '0 0 12px', fontSize: 12, color: '#0369a1' }}>
+          <p style={{ margin: '0 0 12px', fontSize: 12, color: 'var(--blue)' }}>
             Caissier précédent : <strong>{lastClosed.user.name}</strong>
             {lastClosed.closedAt && ` — clôturée le ${new Date(lastClosed.closedAt).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })}`}
           </p>
@@ -277,12 +277,12 @@ export default function OpenSessionForm({ user, lastClosed, currencies }: Props)
       )}
 
       {/* Soldes d'ouverture par devise */}
-      <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden', marginBottom: 20 }}>
-        <div style={{ padding: '12px 16px', background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-          <h3 style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#374151' }}>
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', marginBottom: 20 }}>
+        <div style={{ padding: '12px 16px', background: 'var(--bg3)', borderBottom: '1px solid var(--border)' }}>
+          <h3 style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
             Soldes d'ouverture par devise
           </h3>
-          <p style={{ margin: '2px 0 0', fontSize: 11, color: '#9ca3af' }}>
+          <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text3)' }}>
             Saisissez les montants comptés en caisse à l'ouverture du poste
           </p>
         </div>
@@ -297,7 +297,7 @@ export default function OpenSessionForm({ user, lastClosed, currencies }: Props)
                 padding: '12px 16px',
               }}>
                 <span style={{ minWidth: 28 }}><CurrencyFlag code={b.currencyCode} flag={b.currencyFlag} size={20} /></span>
-                <span style={{ fontWeight: 600, color: '#374151', minWidth: 48 }}>{b.currencyCode}</span>
+                <span style={{ fontWeight: 600, color: 'var(--text)', minWidth: 48 }}>{b.currencyCode}</span>
 
                 {b.hasDenominations ? (
                   /* Montant calculé depuis les coupures */
@@ -314,7 +314,8 @@ export default function OpenSessionForm({ user, lastClosed, currencies }: Props)
                     onChange={e => updateAmount(ci, parseFloat(e.target.value) || 0)}
                     placeholder="0.00"
                     style={{
-                      flex: 1, padding: '6px 10px', border: '1px solid #d1d5db',
+                      flex: 1, padding: '6px 10px', border: '1px solid var(--border2)',
+                      background: 'var(--bg2)', color: 'var(--text)',
                       borderRadius: 6, fontSize: 14, fontWeight: 600, textAlign: 'right',
                     }}
                   />
@@ -325,9 +326,9 @@ export default function OpenSessionForm({ user, lastClosed, currencies }: Props)
                     type="button"
                     onClick={() => toggleDetail(ci)}
                     style={{
-                      background: b.showDetail ? '#f3f4f6' : 'none',
-                      border: '1px solid #d1d5db', borderRadius: 6,
-                      padding: '4px 10px', fontSize: 11, cursor: 'pointer', color: '#6b7280',
+                      background: b.showDetail ? 'var(--bg3)' : 'none',
+                      border: '1px solid var(--border2)', borderRadius: 6,
+                      padding: '4px 10px', fontSize: 11, cursor: 'pointer', color: 'var(--text2)',
                     }}
                   >
                     {b.showDetail ? '▲ Coupures' : '▼ Coupures'}
@@ -338,13 +339,13 @@ export default function OpenSessionForm({ user, lastClosed, currencies }: Props)
               {/* Détail par coupure */}
               {b.hasDenominations && b.showDetail && (
                 <div style={{
-                  background: '#fafafa', borderTop: '1px solid #f3f4f6',
+                  background: 'var(--bg3)', borderTop: '1px solid var(--border)', 
                   padding: '10px 16px 12px 60px',
                 }}>
                   <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: '6px 12px', alignItems: 'center' }}>
                     {b.denominations.map((d, di) => (
                       <React.Fragment key={di}>
-                        <span key={`lbl-${di}`} style={{ fontSize: 12, color: '#6b7280', textAlign: 'right', minWidth: 60 }}>
+                        <span key={`lbl-${di}`} style={{ fontSize: 12, color: 'var(--text2)', textAlign: 'right', minWidth: 60 }}>
                           {d.denomination.toLocaleString('fr-FR')} ×
                         </span>
                         <input
@@ -355,21 +356,22 @@ export default function OpenSessionForm({ user, lastClosed, currencies }: Props)
                           onChange={e => updateDenom(ci, di, parseInt(e.target.value) || 0)}
                           placeholder="0"
                           style={{
-                            padding: '4px 8px', border: '1px solid #d1d5db',
+                            padding: '4px 8px', border: '1px solid var(--border2)',
+                            background: 'var(--bg2)', color: 'var(--text)',
                             borderRadius: 4, fontSize: 13, textAlign: 'center',
                             maxWidth: 80,
                           }}
                         />
-                        <span key={`tot-${di}`} style={{ fontSize: 12, color: '#374151', minWidth: 90, textAlign: 'right' }}>
+                        <span key={`tot-${di}`} style={{ fontSize: 12, color: 'var(--text)', minWidth: 90, textAlign: 'right' }}>
                           = {(d.denomination * d.quantity).toLocaleString('fr-FR', { minimumFractionDigits: 2 })}
                         </span>
                       </React.Fragment>
                     ))}
                   </div>
                   <div style={{
-                    marginTop: 8, paddingTop: 8, borderTop: '1px dashed #e5e7eb',
+                    marginTop: 8, paddingTop: 8, borderTop: '1px dashed var(--border)',
                     display: 'flex', justifyContent: 'flex-end', gap: 8,
-                    fontSize: 13, fontWeight: 700, color: '#111827',
+                    fontSize: 13, fontWeight: 700, color: 'var(--text)',
                   }}>
                     Total : {computeTotal(b.denominations).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} {b.currencyCode}
                   </div>
@@ -382,7 +384,7 @@ export default function OpenSessionForm({ user, lastClosed, currencies }: Props)
 
       {/* Note d'ouverture */}
       <div style={{ marginBottom: 20 }}>
-        <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>
+        <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--text)', marginBottom: 6 }}>
           Note d'ouverture (optionnelle)
         </label>
         <textarea
@@ -391,7 +393,8 @@ export default function OpenSessionForm({ user, lastClosed, currencies }: Props)
           placeholder="Ex : Reprise de caisse normale, soldes transmis par le caissier A..."
           rows={2}
           style={{
-            width: '100%', padding: '8px 12px', border: '1px solid #d1d5db',
+            width: '100%', padding: '8px 12px', border: '1px solid var(--border2)',
+            background: 'var(--bg2)', color: 'var(--text)',
             borderRadius: 8, fontSize: 13, resize: 'vertical', boxSizing: 'border-box',
           }}
         />
