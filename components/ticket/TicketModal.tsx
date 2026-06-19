@@ -51,7 +51,7 @@ export default function TicketModal({
 
   const [size, setSize] = useState('80mm')
   const width = size === '58mm' ? 220 : 300
-  const fs = size === '58mm' ? 10 : 12
+  const fs = size === '58mm' ? 11 : 13
 
   const cur = tx.currency
   const commission = Number(tx.commission || 0)
@@ -88,13 +88,13 @@ export default function TicketModal({
             * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           }
           body {
-            font-family: 'Courier New', monospace;
+            font-family: 'Arial', 'Helvetica Neue', Helvetica, sans-serif;
             width: ${width}px;
             margin: 0 auto;
             padding: 10px;
             font-size: ${fs}px;
             color: #000;
-            font-weight: 500;
+            font-weight: 600;
           }
           .center { text-align: center; }
           .bold { font-weight: bold; }
@@ -217,7 +217,8 @@ export default function TicketModal({
             background: '#fff',
             color: '#000',
             padding: 16,
-            fontFamily: 'Courier New, monospace',
+            fontFamily: "'Arial', 'Helvetica Neue', Helvetica, sans-serif",
+            fontWeight: 600,
             width: size === '58mm' ? 220 : 300,
             margin: '0 auto',
             fontSize: size === '58mm' ? 10 : 12,

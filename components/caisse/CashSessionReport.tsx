@@ -151,6 +151,8 @@ function fmtDuration(minutes: number): string {
 
 const PRINT_STYLES = `
 @media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  :root, [data-theme="dark"] { --text2: #333333 !important; --text3: #555555 !important; }
   .no-print { display: none !important; }
   .page-container { padding: 0 !important; max-width: 100% !important; }
   body { font-size: 11pt !important; background: white !important; color: black !important; }
