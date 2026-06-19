@@ -180,7 +180,9 @@ export default function TransactionForm({ currencies, userName, bureauName, bure
                       const denoms = cat.denominations.split(',').map(d => parseFloat(d.trim())).filter(d => !isNaN(d)).sort((a, b) => b - a)
                       return denoms.map(d => (
                         <tr key={`${cat.id}_${d}`} style={{ borderBottom: '1px solid var(--slate-100)' }}>
-                          <td style={{ padding: '6px 0', fontWeight: 600 }}>{formatNumber(d)}</td>
+                          <td style={{ padding: '6px 0', fontWeight: 600 }}>
+                            {formatNumber(d, d % 1 === 0 ? 0 : 2)}
+                          </td>
                           <td style={{ padding: '6px 0', color: 'var(--slate-500)' }}>{cat.name}</td>
                           <td style={{ padding: '6px 0' }}>{formatNumber(catBuyRate)} <span style={{ fontSize: 10, color: 'var(--slate-400)' }}>Ar</span></td>
                           <td style={{ padding: '6px 0' }}>
@@ -192,7 +194,7 @@ export default function TransactionForm({ currencies, userName, bureauName, bure
                             />
                           </td>
                           <td style={{ padding: '6px 0', textAlign: 'right', fontWeight: 500 }}>
-                            {formatNumber((denomInputs[`${cat.id}_${d}`] || 0) * d)}
+                            {formatNumber((denomInputs[`${cat.id}_${d}`] || 0) * d, d % 1 === 0 ? 0 : 2)}
                           </td>
                         </tr>
                       ))
@@ -201,7 +203,9 @@ export default function TransactionForm({ currencies, userName, bureauName, bure
                   <tfoot>
                     <tr>
                       <td colSpan={4} style={{ paddingTop: 8, fontWeight: 600 }}>Total Devise</td>
-                      <td style={{ paddingTop: 8, textAlign: 'right', fontWeight: 600, color: 'var(--blue)' }}>{formatNumber(effectiveAmount)}</td>
+                      <td style={{ paddingTop: 8, textAlign: 'right', fontWeight: 600, color: 'var(--blue)' }}>
+                        {formatNumber(effectiveAmount, effectiveAmount % 1 === 0 ? 0 : 2)}
+                      </td>
                     </tr>
                   </tfoot>
                 </table>
