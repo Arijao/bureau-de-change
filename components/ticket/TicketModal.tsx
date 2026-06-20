@@ -69,12 +69,21 @@ export default function TicketModal({
     const detailsHtml = hasDetails ? `
       <div style="margin: 8px 0; border-top: 1px dashed #000; border-bottom: 1px dashed #000; padding: 4px 0;">
         <div style="font-weight: bold; font-size: ${fs}px; margin-bottom: 4px;">DÉTAIL DES COUPURES</div>
-        ${tx.details!.map(d => `
-          <div style="display: flex; justify-content: space-between; font-size: ${fs - 1}px; margin-bottom: 2px;">
-            <span>${d.categoryName} (${formatNumber(d.denomination)}) x${d.quantity}</span>
-            <span>${formatNumber(d.subtotalAmount)} ${cur.code} @ ${formatNumber(d.rateApplied)} = ${formatNumber(d.subtotalMGA)} Ar</span>
-          </div>
-        `).join('')}
+        ${tx.details!.map(d => {
+          const denomFmt = d.denomination % 1 === 0
+            ? formatNumber(d.denomination)
+            : formatNumber(d.denomination, 2)
+          return `
+            <div style="margin-bottom: 5px;">
+              <div style="font-size: ${fs - 1}px;">
+                ${d.categoryName} ${denomFmt} × ${d.quantity}
+              </div>
+              <div style="text-align: right; font-size: ${fs - 2}px;">
+                ${formatCurrency(d.subtotalAmount, cur.code)} = ${formatNumber(d.subtotalMGA)} Ar
+              </div>
+            </div>
+          `
+        }).join('')}
       </div>
     ` : ''
 
@@ -84,22 +93,37 @@ export default function TicketModal({
       <head>
         <title>Ticket ${tx.receiptNo}</title>
         <style>
+          /* ↓ CRITIQUE : supprime les marges browser, cadre la page sur la largeur exacte du rouleau */
+          @page { size: ${width}px auto; margin: 0; }
           @media print {
             * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           }
+          /* ↓ padding inclus dans la largeur déclarée */
+          *, *::before, *::after { box-sizing: border-box; }
           body {
             font-family: 'Arial', 'Helvetica Neue', Helvetica, sans-serif;
             width: ${width}px;
-            margin: 0 auto;
+            margin: 0;           /* @page gère déjà la position */
             padding: 10px;
             font-size: ${fs}px;
             color: #000;
             font-weight: 600;
+            word-break: break-word;      /* ↓ retour à la ligne si le contenu dépasse */
+            overflow-wrap: break-word;
           }
           .center { text-align: center; }
           .bold { font-weight: bold; }
-          .row { display: flex; justify-content: space-between; margin-bottom: 4px; }
-          .divider { border-top: 1px dashed #000; margin: 8px 0; }
+          .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;    /* ↓ aligne en haut si le texte passe sur 2 lignes */
+            gap: 6px;
+            margin-bottom: 4px;
+          }
+          /* ↓ label fixe à gauche, valeur peut se réduire et passe à la ligne si besoin */
+          .row span:first-child { flex-shrink: 0; }
+          .row span:last-child  { text-align: right; min-width: 0; }
+          .divider { border-top: 1px dashed #000; margin: 6px 0; }
           .total { font-size: ${fs + 2}px; font-weight: bold; }
           span { color: #000; }
         </style>
@@ -138,17 +162,10 @@ export default function TicketModal({
           <span class="bold">${formatCurrency(Number(tx.amount), cur.code)}</span>
         </div>
         
-        ${!hasDetails ? `
         <div class="row">
-          <span>Taux appliqué:</span>
+          <span>${hasDetails ? 'Taux pondéré :' : 'Taux :'}</span>
           <span>${formatNumber(Number(tx.rate))} Ar/${cur.code}</span>
         </div>
-        ` : `
-        <div class="row">
-          <span>Taux moyen pondéré:</span>
-          <span>${formatNumber(Number(tx.rate))} Ar/${cur.code}</span>
-        </div>
-        `}
 
         ${commission > 0 ? `
         <div class="row">
@@ -236,14 +253,21 @@ export default function TicketModal({
           <div style={{ textAlign: 'center', fontSize: size === '58mm' ? 9 : 10, marginBottom: 8 }}>Tél: {bureauPhone}</div>
           <div style={{ borderTop: '1px dashed #000', margin: '8px 0' }}></div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>Ticket N°:</span>
-            <span style={{ fontWeight: 'bold' }}>{tx.receiptNo}</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 6 }}>
+            <span style={{ flexShrink: 0 }}>Ticket N° :</span>
+            <span style={{ fontWeight: 'bold', textAlign: 'right' }}>{tx.receiptNo}</span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>Date:</span>
-            <span>{formatDate(tx.createdAt)} {formatTime(tx.createdAt)}</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 6 }}>
+            <span style={{ flexShrink: 0 }}>Date :</span>
+            <span style={{ textAlign: 'right' }}>{formatDate(tx.createdAt)} {formatTime(tx.createdAt)}</span>
           </div>
+          {/* Caissier : présent dans le ticket imprimé mais absent de l'aperçu — correction */}
+          {tx.user?.name && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 6 }}>
+              <span style={{ flexShrink: 0 }}>Caissier :</span>
+              <span style={{ textAlign: 'right' }}>{tx.user.name}</span>
+            </div>
+          )}
           <div style={{ borderTop: '1px dashed #000', margin: '8px 0' }}></div>
 
           <div style={{ textAlign: 'center', fontWeight: 'bold', margin: '8px 0' }}>
@@ -254,12 +278,22 @@ export default function TicketModal({
           {hasDetails && (
             <div style={{ margin: '8px 0', borderTop: '1px dashed #000', borderBottom: '1px dashed #000', padding: '4px 0' }}>
               <div style={{ fontWeight: 'bold', marginBottom: 4 }}>DÉTAIL DES COUPURES</div>
-              {tx.details!.map((d, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: size === '58mm' ? 9 : 10, marginBottom: 2 }}>
-                  <span>{d.categoryName} ({formatNumber(d.denomination)}) x{d.quantity}</span>
-                  <span>{formatNumber(d.subtotalAmount)} {cur.code} @ {formatNumber(d.rateApplied)} = {formatNumber(d.subtotalMGA)} Ar</span>
-                </div>
-              ))}
+
+              {tx.details!.map((d, i) => {
+                const denomFmt = d.denomination % 1 === 0
+                  ? formatNumber(d.denomination)
+                  : formatNumber(d.denomination, 2)
+                return (
+                  <div key={i} style={{ marginBottom: 4 }}>
+                    <div style={{ fontSize: size === '58mm' ? 9 : 10 }}>
+                      {d.categoryName} {denomFmt} × {d.quantity}
+                    </div>
+                    <div style={{ textAlign: 'right', fontSize: size === '58mm' ? 8 : 9 }}>
+                      {formatCurrency(d.subtotalAmount, cur.code)} = {formatMGA(d.subtotalMGA)}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           )}
 
@@ -267,9 +301,9 @@ export default function TicketModal({
             <span>Montant {cur.code}:</span>
             <span style={{ fontWeight: 'bold' }}>{formatCurrency(Number(tx.amount), cur.code)}</span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>Taux {hasDetails ? '(moyen pondéré)' : 'appliqué'}:</span>
-            <span>{formatNumber(Number(tx.rate))} Ar/{cur.code}</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 6 }}>
+            <span style={{ flexShrink: 0 }}>{hasDetails ? 'Taux pondéré :' : 'Taux :'}</span>
+            <span style={{ textAlign: 'right' }}>{formatNumber(Number(tx.rate))} Ar/{cur.code}</span>
           </div>
           {commission > 0 && (
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
