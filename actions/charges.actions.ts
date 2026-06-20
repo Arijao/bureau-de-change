@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { getSessionUser } from '@/lib/auth'
 import * as chargesService from '@/services/charges.service'
+import { CAISSIER_ALLOWED_CATEGORY_VALUES } from '@/lib/expense-roles'
 
 // Helper pour vérifier les droits admin
 async function requireAdmin() {
@@ -28,14 +29,41 @@ export async function createExpenseAction(data: {
   note?: string
 }) {
   try {
-    await requireAdmin()
+    const user = await getSessionUser()
+    if (!user) return { error: 'Non authentifié' }
+
+    let cashSessionId: string | undefined = undefined
+
+    if (user.role === 'CAISSIER') {
+      // ── Garde 1 : catégorie opérationnelle uniquement ──────────────────────
+      if (!(CAISSIER_ALLOWED_CATEGORY_VALUES as readonly string[]).includes(data.category)) {
+        return {
+          error: `Catégorie non autorisée. Le caissier peut saisir : ${CAISSIER_ALLOWED_CATEGORY_VALUES.join(', ')}.`,
+        }
+      }
+
+      // [MOD-6] Garde 2 supprimée : aucun plafond de montant imposé au caissier.
+      // Le contrôle est assuré par la clôture de session (écart physique / théorique).
+
+      // ── Garde 2 : session de caisse ouverte obligatoire ───────────────────
+      const { assertOpenSession } = await import('@/services/cash-session.service')
+      try {
+        cashSessionId = await assertOpenSession(user.id)
+      } catch {
+        return {
+          error: "Aucune session de caisse ouverte. Ouvrez une session avant d'enregistrer une dépense.",
+        }
+      }
+    } else if (user.role !== 'ADMIN') {
+      return { error: 'Accès refusé' }
+    }
 
     const expense = await chargesService.createExpense({
       ...data,
       date: new Date(data.date),
+      cashSessionId,
     })
 
-    // Générer l'écriture comptable
     const { createExpenseAccountingEntry } = await import('@/services/charges.service')
     const { prisma } = await import('@/lib/prisma')
     await createExpenseAccountingEntry(expense.id, prisma)
@@ -44,6 +72,7 @@ export async function createExpenseAction(data: {
     revalidatePath('/charges/expenses')
     revalidatePath('/dashboard')
     revalidatePath('/accounting/journal')
+    revalidatePath('/caisse')
 
     return { success: true, expense }
   } catch (e: any) {

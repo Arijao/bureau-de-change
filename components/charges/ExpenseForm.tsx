@@ -3,6 +3,12 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createExpenseAction } from '@/actions/charges.actions'
+import {
+  ALL_EXPENSE_CATEGORIES,
+  CATEGORY_ACCOUNT_MAP,
+  CAISSIER_ALLOWED_CATEGORY_VALUES,
+  // [MOD-6] CAISSIER_EXPENSE_CAP supprimé de l'import — constante retirée
+} from '@/lib/expense-roles'
 
 interface Account {
   id: number
@@ -12,38 +18,10 @@ interface Account {
 
 interface Props {
   accounts: Account[]
+  userRole: 'ADMIN' | 'CAISSIER'
 }
 
-const CATEGORIES = [
-  { value: 'LOYER', label: '🏠 Loyer' },
-  { value: 'ELECTRICITE', label: '💡 Électricité' },
-  { value: 'EAU', label: '💧 Eau' },
-  { value: 'INTERNET', label: '🌐 Internet / Télécom' },
-  { value: 'CARBURANT', label: '⛽ Carburant' },
-  { value: 'FOURNITURES', label: '📎 Fournitures bureau' },
-  { value: 'ENTRETIEN', label: '🔧 Entretien' },
-  { value: 'TRANSPORT', label: '🚗 Transport / Déplacement' },
-  { value: 'ASSURANCE', label: '🛡️ Assurance' },
-  { value: 'SERVICES_BANCAIRES', label: '🏦 Services bancaires' },
-  { value: 'AUTRES', label: '📋 Autres' },
-]
-
-// Mapping catégorie → code compte comptable
-const CATEGORY_ACCOUNT_MAP: Record<string, string> = {
-  LOYER: '613000',
-  ELECTRICITE: '653000',
-  EAU: '654000',
-  INTERNET: '626000',
-  CARBURANT: '652000',
-  FOURNITURES: '651000',
-  ENTRETIEN: '615000',
-  TRANSPORT: '625000',
-  ASSURANCE: '616000',
-  SERVICES_BANCAIRES: '627000',
-  AUTRES: '628000',
-}
-
-export default function ExpenseForm({ accounts }: Props) {
+export default function ExpenseForm({ accounts, userRole }: Props) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -51,14 +29,28 @@ export default function ExpenseForm({ accounts }: Props) {
 
   const today = new Date().toISOString().split('T')[0]
 
-  // Trouver le compte par défaut pour la catégorie LOYER
-  const defaultAccount = accounts.find(a => a.code === CATEGORY_ACCOUNT_MAP['LOYER'])
+  // Catégories filtrées selon le rôle
+  const availableCategories =
+    userRole === 'CAISSIER'
+      ? ALL_EXPENSE_CATEGORIES.filter(c =>
+          (CAISSIER_ALLOWED_CATEGORY_VALUES as readonly string[]).includes(c.value)
+        )
+      : ALL_EXPENSE_CATEGORIES
+
+  // Catégorie par défaut : première disponible pour le rôle
+  // ADMIN → 'LOYER' | CAISSIER → 'FOURNITURES'
+  const defaultCategory = availableCategories[0]?.value ?? 'FOURNITURES'
+
+  // Compte comptable par défaut aligné sur la catégorie par défaut du rôle
+  const defaultAccount = accounts.find(
+    a => a.code === CATEGORY_ACCOUNT_MAP[defaultCategory]
+  )
 
   const [formData, setFormData] = useState({
     date: today,
     amount: '',
     accountId: defaultAccount?.id.toString() || '',
-    category: 'LOYER',
+    category: defaultCategory,
     supplier: '',
     description: '',
     reference: '',
@@ -70,7 +62,7 @@ export default function ExpenseForm({ accounts }: Props) {
     const { name, value } = e.target
     setFormData(prev => {
       const updated = { ...prev, [name]: value }
-      
+
       // Auto-sélection du compte comptable selon la catégorie
       if (name === 'category') {
         const accountCode = CATEGORY_ACCOUNT_MAP[value]
@@ -79,7 +71,7 @@ export default function ExpenseForm({ accounts }: Props) {
           updated.accountId = account.id.toString()
         }
       }
-      
+
       return updated
     })
   }
@@ -118,19 +110,15 @@ export default function ExpenseForm({ accounts }: Props) {
         date: today,
         amount: '',
         accountId: formData.accountId,
-        category: 'LOYER',
+        category: defaultCategory,
         supplier: '',
         description: '',
         reference: '',
         period: '',
         note: '',
       })
-      
-      // Forcer le rechargement complet pour rafraîchir la liste des dépenses
-      setTimeout(() => {
-        window.location.reload()
-      }, 500)
-      
+
+      setTimeout(() => { window.location.reload() }, 500)
       setTimeout(() => setSuccess(''), 3000)
     }
   }
@@ -141,6 +129,15 @@ export default function ExpenseForm({ accounts }: Props) {
         <span className="card-icon card-icon-blue">💸</span>
         <h2 className="card-title">Nouvelle dépense</h2>
       </div>
+
+      {/* Bandeau informatif caissier — sans mention de plafond [MOD-6] */}
+      {userRole === 'CAISSIER' && (
+        <div className="alert alert-info" style={{ marginBottom: 16, fontSize: 13 }}>
+          💡 <strong>Dépenses de caisse uniquement</strong> — Dépenses opérationnelles
+          payées depuis le tiroir-caisse (fournitures, transport, services bancaires).
+          Pour les charges administratives (loyer, salaires…), contactez l'administration.
+        </div>
+      )}
 
       {error && <div className="alert alert-error">{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}
@@ -168,7 +165,7 @@ export default function ExpenseForm({ accounts }: Props) {
               onChange={handleChange}
               required
             >
-              {CATEGORIES.map(cat => (
+              {availableCategories.map(cat => (
                 <option key={cat.value} value={cat.value}>
                   {cat.label}
                 </option>
@@ -179,18 +176,19 @@ export default function ExpenseForm({ accounts }: Props) {
           <div className="form-group">
             <label className="form-label">Montant (Ar) *</label>
             <input
-                type="number"
-                className="form-control"
-                name="amount"
-                value={formData.amount}
-                onChange={handleChange}
-                min="1"
-                step="1"
-                required
-                placeholder="0"
+              type="number"
+              className="form-control"
+              name="amount"
+              value={formData.amount}
+              onChange={handleChange}
+              min="1"
+              step="1"
+              required
+              placeholder="0"
             />
+            {/* [MOD-6] Hint uniforme — plus de mention de plafond */}
             <small className="text-muted fs-12">
-                Saisissez le montant exact en Ariary
+              Saisissez le montant exact en Ariary
             </small>
           </div>
         </div>

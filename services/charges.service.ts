@@ -41,8 +41,11 @@ export async function getExpenses(filters?: {
   category?: string
   dateFrom?: Date
   dateTo?: Date
+  cashSessionId?: string 
 }): Promise<Expense[]> {
   const where: any = {}
+
+  if (filters?.cashSessionId) where.cashSessionId = filters.cashSessionId 
 
   if (filters?.category) {
     where.category = filters.category
